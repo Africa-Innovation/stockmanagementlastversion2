@@ -126,19 +126,51 @@ class DatabaseHelper {
     );
   }
 
- Future<void> insertVente(Map<String, dynamic> vente) async {
+Future<void> insertVente(Map<String, dynamic> vente) async {
   final db = await database;
-  await db.insert('ventes', {
-    'idVente': vente['idVente'],
-    'date': (vente['date'] as DateTime).toIso8601String(), // Convertir DateTime en String
-    'produitsVendus': jsonEncode(vente['produitsVendus']),
-    'montantTotal': vente['montantTotal'],
-    'idUtilisateur': vente['idUtilisateur'],
-    'synchronise': 0, // 0 = non synchronisé
-  });
-  print('Vente insérée localement: ${vente['idVente']}');
-}
 
+  // Vérifier si la vente existe déjà
+  final existingVente = await db.query(
+    'ventes',
+    where: 'idVente = ?',
+    whereArgs: [vente['idVente']],
+  );
+
+  if (existingVente.isNotEmpty) {
+    // Mettre à jour la vente existante
+    await db.update(
+      'ventes',
+      {
+        'date': vente['date'] is DateTime
+            ? (vente['date'] as DateTime).toIso8601String() // Convertir DateTime en String
+            : vente['date'] as String, // Utiliser directement si c'est déjà une String
+        'produitsVendus': jsonEncode(vente['produitsVendus']),
+        'montantTotal': vente['montantTotal'],
+        'idUtilisateur': vente['idUtilisateur'],
+        'synchronise': 0, // 0 = non synchronisé
+      },
+      where: 'idVente = ?',
+      whereArgs: [vente['idVente']],
+    );
+    print('Vente mise à jour localement: ${vente['idVente']}');
+  } else {
+    // Insérer une nouvelle vente
+    await db.insert(
+      'ventes',
+      {
+        'idVente': vente['idVente'],
+        'date': vente['date'] is DateTime
+            ? (vente['date'] as DateTime).toIso8601String() // Convertir DateTime en String
+            : vente['date'] as String, // Utiliser directement si c'est déjà une String
+        'produitsVendus': jsonEncode(vente['produitsVendus']),
+        'montantTotal': vente['montantTotal'],
+        'idUtilisateur': vente['idUtilisateur'],
+        'synchronise': 0, // 0 = non synchronisé
+      },
+    );
+    print('Vente insérée localement: ${vente['idVente']}');
+  }
+}
 Future<List<Map<String, dynamic>>> getVentes(String idUtilisateur) async {
   final db = await database;
   return await db.query(
@@ -197,6 +229,7 @@ Future<List<Vente>> getVentesNonSynchronisees(String idUtilisateur) async {
   );
   print('Ventes non synchronisées récupérées: ${ventes.length}');
   return ventes.map((v) {
+    print('Date locale récupérée: ${v['date']}');
     final produitsVendus = jsonDecode(v['produitsVendus'] as String);
     return Vente(
       idVente: v['idVente'] as String,
