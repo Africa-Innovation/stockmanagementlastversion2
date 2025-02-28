@@ -72,10 +72,9 @@ class ConnexionPage extends StatelessWidget {
   );
 
   if (utilisateur != null) {
-    // Enregistrer l'état de connexion et le nom de la boutique
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('isLoggedIn', true);
-    await prefs.setString('nomBoutique', utilisateur.nomBoutique); // Enregistrer le nom de la boutique
+    await prefs.setString('idUtilisateur', utilisateur.idUtilisateur!); // Stocker l'ID utilisateur
+    await prefs.setString('nomBoutique', utilisateur.nomBoutique);
 
     Navigator.pushReplacement(
       context,

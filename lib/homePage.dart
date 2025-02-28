@@ -67,24 +67,16 @@ class HomePage extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              title: const Text('Statistique'),
-//               onTap: () {
-//                 Navigator.of(context).push(
-//   MaterialPageRoute(
-//     builder: (context) => TendanceVentesPage(),
-//   ),
-// );
-//               },
+            const ListTile(
+              title: Text('Statistique'),
+
+            ),
+            const ListTile(
+              title: Text('Synchro'),
+              
             ),
             ListTile(
-              title: const Text('Synchro'),
-              // onTap: () {
-              //   Navigator.pushNamed(context, '/AlertesStockPage');
-              // },
-            ),
-            ListTile(
-              title: Text('Déconnexion'),
+              title: const Text('Déconnexion'),
               onTap: () async {
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setBool('isLoggedIn', false); // Déconnecter l'utilisateur

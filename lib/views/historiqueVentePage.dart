@@ -5,6 +5,7 @@ import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmanagementversion2/controller/venteController.dart';
 import 'package:stockmanagementversion2/model/venteModel.dart';
 import 'package:stockmanagementversion2/views/detailVentePage.dart';
@@ -29,16 +30,26 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
   }
 
   Future<void> _chargerVentes() async {
-    final ventes = await _controller.obtenirHistoriqueVentes('idUtilisateur');
-    // Trier les ventes par date (du plus récent au plus ancien)
-    ventes.sort((a, b) => b.date.compareTo(a.date));
-    setState(() {
-      _ventes = ventes;
-      _ventesFiltrees = ventes;
-      _calculerTotalVentes();
-      isLoading = false;
-    });
+  final prefs = await SharedPreferences.getInstance();
+  final idUtilisateur = prefs.getString('idUtilisateur'); // Récupérer l'ID utilisateur
+
+  if (idUtilisateur == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Utilisateur non connecté')),
+    );
+    return;
   }
+
+  final ventes = await _controller.obtenirHistoriqueVentes(idUtilisateur); // Utiliser l'ID utilisateur réel
+  // Trier les ventes par date (du plus récent au plus ancien)
+  ventes.sort((a, b) => b.date.compareTo(a.date));
+  setState(() {
+    _ventes = ventes;
+    _ventesFiltrees = ventes;
+    _calculerTotalVentes();
+    isLoading = false;
+  });
+}
 
   void _filtrerVentes(String query) {
     setState(() {

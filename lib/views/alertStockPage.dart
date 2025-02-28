@@ -18,7 +18,7 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
   }
 
   Future<void> _chargerProduitsEnAlerte() async {
-    final produitsEnAlerte = await _controller.verifierAlertesStock('idUtilisateur');
+    final produitsEnAlerte = await _controller.verifierAlertesStock();
     setState(() {
       _produitsEnAlerte = produitsEnAlerte;
     });

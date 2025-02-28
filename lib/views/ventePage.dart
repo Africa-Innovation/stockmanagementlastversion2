@@ -33,7 +33,7 @@ class _VentesPageState extends State<VentesPage> {
   }
 
   Future<void> _chargerProduitsDisponibles() async {
-    final produits = await _produitController.obtenirProduits('idUtilisateur');
+    final produits = await _produitController.obtenirProduits();
     setState(() {
       _produitsDisponibles = produits;
       _produitsFiltres = produits; // Initialiser la liste filtrée
@@ -127,6 +127,17 @@ class _VentesPageState extends State<VentesPage> {
     }
   }
 
+  // Récupérer l'ID utilisateur connecté
+  final prefs = await SharedPreferences.getInstance();
+  final idUtilisateur = prefs.getString('idUtilisateur');
+
+  if (idUtilisateur == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Utilisateur non connecté')),
+    );
+    return;
+  }
+
   // Enregistrer la vente
   final String idVente = Uuid().v4(); // Génère un UUID unique
 
@@ -147,7 +158,7 @@ class _VentesPageState extends State<VentesPage> {
     date: DateTime.now(),
     produitsVendus: produitsVendus, // Ajoutez cette ligne
     montantTotal: _montantTotal,
-    idUtilisateur: 'idUtilisateur',
+    idUtilisateur: idUtilisateur, // Utiliser l'ID utilisateur réel
   );
 
   await _venteController.enregistrerVente(vente);

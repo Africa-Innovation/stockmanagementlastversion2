@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmanagementversion2/controller/produitController.dart';
 import 'package:stockmanagementversion2/model/produitModel.dart';
+import 'package:uuid/uuid.dart';
 
 class GestionProduitsPage extends StatefulWidget {
   @override
@@ -21,7 +23,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
   }
 
   Future<void> _chargerProduits() async {
-    final produits = await _controller.obtenirProduits('idUtilisateur');
+    final produits = await _controller.obtenirProduits();
     setState(() {
       _produits = produits;
       _produitsFiltres = produits; // Initialiser la liste filtrée
@@ -42,135 +44,144 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
     });
   }
 
-  Future<void> _afficherFormulaireAjoutProduit(BuildContext context,
-      {Produit? produitExist}) async {
-    final TextEditingController _nomController =
-        TextEditingController(text: produitExist?.nom);
-    final TextEditingController _referenceController =
-        TextEditingController(text: produitExist?.reference);
-    final TextEditingController _prixController =
-        TextEditingController(text: produitExist?.prix.toString());
-    final TextEditingController _quantiteController =
-        TextEditingController(text: produitExist?.quantite.toString());
-    final TextEditingController _stockMinimumController =
-        TextEditingController(text: produitExist?.stockMinimum.toString());
-    final TextEditingController _categorieController =
-        TextEditingController(text: produitExist?.categorie);
+ Future<void> _afficherFormulaireAjoutProduit(BuildContext context,
+    {Produit? produitExist}) async {
+  final prefs = await SharedPreferences.getInstance();
+  final idUtilisateur = prefs.getString('idUtilisateur'); // Récupérer l'ID utilisateur
 
-    return showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(produitExist == null
-              ? 'Ajouter un produit'
-              : 'Modifier le produit'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                TextField(
-                  controller: _nomController,
-                  decoration: InputDecoration(labelText: 'Nom*'),
-                ),
-                TextField(
-                  controller: _referenceController,
-                  decoration: InputDecoration(labelText: 'Référence'),
-                ),
-                TextField(
-                  controller: _prixController,
-                  decoration: InputDecoration(labelText: 'Prix*'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: _quantiteController,
-                  decoration: InputDecoration(labelText: 'Quantité*'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: _stockMinimumController,
-                  decoration: InputDecoration(labelText: 'Stock minimum*'),
-                  keyboardType: TextInputType.number,
-                ),
-                TextField(
-                  controller: _categorieController,
-                  decoration: InputDecoration(labelText: 'Catégorie'),
-                ),
-                SizedBox(height: 16),
-                Text('* Champs obligatoires',
-                    style: TextStyle(color: Colors.grey)),
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop(); // Fermer le dialog
-              },
-              child: Text('Annuler'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                try {
-                  // Vérifier que les champs obligatoires ne sont pas vides
-                  if (_nomController.text.isEmpty ||
-                      _prixController.text.isEmpty ||
-                      _quantiteController.text.isEmpty ||
-                      _stockMinimumController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Veuillez remplir tous les champs obligatoires')),
-                    );
-                    return;
-                  }
-
-                  int quantite = int.parse(_quantiteController.text);
-                  int stockMinimum = int.parse(_stockMinimumController.text);
-
-                  // Vérifier que le stock minimum ne dépasse pas la quantité
-                  if (stockMinimum > quantite) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text(
-                              'Le stock minimum ne peut pas être supérieur à la quantité')),
-                    );
-                    return;
-                  }
-
-                  final produit = Produit(
-                    idProduit:
-                        produitExist?.idProduit ?? DateTime.now().toString(),
-                    nom: _nomController.text,
-                    reference: _referenceController.text,
-                    prix: double.parse(_prixController.text),
-                    quantite: quantite,
-                    stockMinimum: stockMinimum,
-                    dateAjout: produitExist?.dateAjout ?? DateTime.now(),
-                    categorie: _categorieController.text,
-                    idUtilisateur: 'idUtilisateur',
-                  );
-
-                  if (produitExist == null) {
-                    await _controller.ajouterProduit(produit);
-                  } else {
-                    await _controller.modifierProduit(produit);
-                  }
-
-                  _chargerProduits(); // Recharger la liste des produits
-                  Navigator.of(context).pop(); // Fermer le dialog
-                } catch (e) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Erreur: ${e.toString()}')),
-                  );
-                }
-              },
-              child: Text(produitExist == null ? 'Ajouter' : 'Modifier'),
-            ),
-          ],
-        );
-      },
+  if (idUtilisateur == null) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Utilisateur non connecté')),
     );
+    return;
   }
+
+  final TextEditingController _nomController =
+      TextEditingController(text: produitExist?.nom);
+  final TextEditingController _referenceController =
+      TextEditingController(text: produitExist?.reference);
+  final TextEditingController _prixController =
+      TextEditingController(text: produitExist?.prix.toString());
+  final TextEditingController _quantiteController =
+      TextEditingController(text: produitExist?.quantite.toString());
+  final TextEditingController _stockMinimumController =
+      TextEditingController(text: produitExist?.stockMinimum.toString());
+  final TextEditingController _categorieController =
+      TextEditingController(text: produitExist?.categorie);
+
+  return showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: Text(produitExist == null
+            ? 'Ajouter un produit'
+            : 'Modifier le produit'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nomController,
+                decoration: InputDecoration(labelText: 'Nom*'),
+              ),
+              TextField(
+                controller: _referenceController,
+                decoration: InputDecoration(labelText: 'Référence'),
+              ),
+              TextField(
+                controller: _prixController,
+                decoration: InputDecoration(labelText: 'Prix*'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: _quantiteController,
+                decoration: InputDecoration(labelText: 'Quantité*'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: _stockMinimumController,
+                decoration: InputDecoration(labelText: 'Stock minimum*'),
+                keyboardType: TextInputType.number,
+              ),
+              TextField(
+                controller: _categorieController,
+                decoration: InputDecoration(labelText: 'Catégorie'),
+              ),
+              SizedBox(height: 16),
+              Text('* Champs obligatoires',
+                  style: TextStyle(color: Colors.grey)),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pop(); // Fermer le dialog
+            },
+            child: Text('Annuler'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              try {
+                // Vérifier que les champs obligatoires ne sont pas vides
+                if (_nomController.text.isEmpty ||
+                    _prixController.text.isEmpty ||
+                    _quantiteController.text.isEmpty ||
+                    _stockMinimumController.text.isEmpty) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            'Veuillez remplir tous les champs obligatoires')),
+                  );
+                  return;
+                }
+
+                int quantite = int.parse(_quantiteController.text);
+                int stockMinimum = int.parse(_stockMinimumController.text);
+
+                // Vérifier que le stock minimum ne dépasse pas la quantité
+                if (stockMinimum > quantite) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text(
+                            'Le stock minimum ne peut pas être supérieur à la quantité')),
+                  );
+                  return;
+                }
+
+                final produit = Produit(
+                  idProduit: produitExist?.idProduit ?? Uuid().v4(), // Utilisation de UUID
+                  nom: _nomController.text,
+                  reference: _referenceController.text,
+                  prix: double.parse(_prixController.text),
+                  quantite: quantite,
+                  stockMinimum: stockMinimum,
+                  dateAjout: produitExist?.dateAjout ?? DateTime.now(),
+                  categorie: _categorieController.text,
+                  idUtilisateur: idUtilisateur, // Utiliser l'ID utilisateur réel
+                );
+
+                if (produitExist == null) {
+                  await _controller.ajouterProduit(produit);
+                } else {
+                  await _controller.modifierProduit(produit);
+                }
+
+                _chargerProduits(); // Recharger la liste des produits
+                Navigator.of(context).pop(); // Fermer le dialog
+              } catch (e) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Erreur: ${e.toString()}')),
+                );
+              }
+            },
+            child: Text(produitExist == null ? 'Ajouter' : 'Modifier'),
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Future<void> _afficherDetailsProduit(
       BuildContext context, Produit produit) async {

@@ -99,13 +99,13 @@ class DatabaseHelper {
   }
 
   Future<List<Map<String, dynamic>>> getProduits(String idUtilisateur) async {
-    final db = await database;
-    return await db.query(
-      'produits',
-      where: 'idUtilisateur = ?',
-      whereArgs: [idUtilisateur],
-    );
-  }
+  final db = await database;
+  return await db.query(
+    'produits',
+    where: 'idUtilisateur = ?',
+    whereArgs: [idUtilisateur],
+  );
+}
 
   Future<void> deleteProduit(String idProduit) async {
     final db = await database;
