@@ -77,9 +77,9 @@ class HomePage extends StatelessWidget {
   onTap: () async {
     final synchronisationService = SynchronisationService();
     await synchronisationService.synchroniserDonnees(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Synchronisation terminée')),
-    );
+    // ScaffoldMessenger.of(context).showSnackBar(
+    //   SnackBar(content: Text('Synchronisation terminée')),
+    // );
   },
 ),
             ListTile(

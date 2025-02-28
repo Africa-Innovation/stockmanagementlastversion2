@@ -11,6 +11,23 @@ class SynchronisationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> synchroniserDonnees(BuildContext context) async {
+  showDialog(
+    context: context,
+    barrierDismissible: false, // Empêche l'utilisateur de fermer la boîte de dialogue
+    builder: (context) {
+      return AlertDialog(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            CircularProgressIndicator(), // Indicateur de chargement
+            SizedBox(height: 16),
+            Text('Synchronisation en cours...'),
+          ],
+        ),
+      );
+    },
+  );
+
   try {
     final prefs = await SharedPreferences.getInstance();
     final idUtilisateur = prefs.getString('idUtilisateur');
@@ -19,19 +36,21 @@ class SynchronisationService {
       throw Exception('Utilisateur non connecté');
     }
 
-    // Synchroniser les informations de l'utilisateur
+    // Synchroniser les données
     await _synchroniserUtilisateur(idUtilisateur);
-
-    // Synchroniser les produits
     await _synchroniserProduits(idUtilisateur);
-
-    // Synchroniser les ventes
     await _synchroniserVentes(idUtilisateur);
+
+    // Fermer la boîte de dialogue
+    Navigator.of(context).pop();
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Synchronisation terminée avec succès.')),
     );
   } catch (e) {
+    // Fermer la boîte de dialogue en cas d'erreur
+    Navigator.of(context).pop();
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Erreur lors de la synchronisation : $e')),
     );
@@ -69,50 +88,54 @@ class SynchronisationService {
 }
 
   Future<void> _synchroniserVentes(String idUtilisateur) async {
-  print('Récupération des ventes non synchronisées...');
-  final ventesLocales = await _dbHelper.getVentesNonSynchronisees(idUtilisateur);
-  print('${ventesLocales.length} ventes à synchroniser.');
+  try {
+    print('Récupération des ventes non synchronisées...');
+    final ventesLocales = await _dbHelper.getVentesNonSynchronisees(idUtilisateur);
+    print('${ventesLocales.length} ventes à synchroniser.');
 
-  for (final vente in ventesLocales) {
-    print('Synchronisation de la vente ${vente.idVente}...');
-    final produitsVendusJson = vente.produitsVendus.map((p) => p.toMap()).toList();
+    for (final vente in ventesLocales) {
+      print('Synchronisation de la vente ${vente.idVente}...');
+      final produitsVendusJson = vente.produitsVendus.map((p) => p.toMap()).toList();
 
-    await _firestore
+      await _firestore
+          .collection('utilisateurs')
+          .doc(idUtilisateur)
+          .collection('ventes')
+          .doc(vente.idVente)
+          .set({
+            'idVente': vente.idVente,
+            'date': vente.date.toIso8601String(), // Convertir DateTime en String
+            'produitsVendus': produitsVendusJson,
+            'montantTotal': vente.montantTotal,
+            'idUtilisateur': vente.idUtilisateur,
+          });
+
+      print('Marquage de la vente ${vente.idVente} comme synchronisée...');
+      await _dbHelper.marquerVenteCommeSynchronisee(vente.idVente);
+    }
+
+    print('Récupération des ventes de Firestore...');
+    final ventesFirestore = await _firestore
         .collection('utilisateurs')
         .doc(idUtilisateur)
         .collection('ventes')
-        .doc(vente.idVente)
-        .set({
-          'idVente': vente.idVente,
-          'date': vente.date.toIso8601String(),
-          'produitsVendus': produitsVendusJson,
-          'montantTotal': vente.montantTotal,
-          'idUtilisateur': vente.idUtilisateur,
-        });
+        .get();
 
-    print('Marquage de la vente ${vente.idVente} comme synchronisée...');
-    await _dbHelper.marquerVenteCommeSynchronisee(vente.idVente);
-  }
-
-  print('Récupération des ventes de Firestore...');
-  final ventesFirestore = await _firestore
-      .collection('utilisateurs')
-      .doc(idUtilisateur)
-      .collection('ventes')
-      .get();
-
-  print('Mise à jour de la base locale avec ${ventesFirestore.docs.length} ventes...');
-  for (final doc in ventesFirestore.docs) {
-    final vente = Vente(
-      idVente: doc.id,
-      date: DateTime.parse(doc['date']),
-      produitsVendus: (doc['produitsVendus'] as List)
-          .map((p) => ProduitVendu.fromMap(p))
-          .toList(),
-      montantTotal: doc['montantTotal'],
-      idUtilisateur: doc['idUtilisateur'],
-    );
-    await _dbHelper.insertVente(vente.toMap());
+    print('Mise à jour de la base locale avec ${ventesFirestore.docs.length} ventes...');
+    for (final doc in ventesFirestore.docs) {
+      final vente = Vente(
+        idVente: doc.id,
+        date: DateTime.parse(doc['date']), // Convertir String en DateTime
+        produitsVendus: (doc['produitsVendus'] as List)
+            .map((p) => ProduitVendu.fromMap(p))
+            .toList(),
+        montantTotal: doc['montantTotal'],
+        idUtilisateur: doc['idUtilisateur'],
+      );
+      await _dbHelper.insertVente(vente.toMap());
+    }
+  } catch (e) {
+    print('Erreur lors de la synchronisation des ventes: $e');
   }
 }
 
