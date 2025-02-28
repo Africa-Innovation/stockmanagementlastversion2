@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stockmanagementversion2/model/firebasesynch.dart';
 import 'package:stockmanagementversion2/views/alertStockPage.dart';
 import 'package:stockmanagementversion2/views/calculatrice.dart';
 import 'package:stockmanagementversion2/views/connexionPage.dart';
@@ -71,10 +72,16 @@ class HomePage extends StatelessWidget {
               title: Text('Statistique'),
 
             ),
-            const ListTile(
-              title: Text('Synchro'),
-              
-            ),
+            ListTile(
+  title: const Text('Synchro'),
+  onTap: () async {
+    final synchronisationService = SynchronisationService();
+    await synchronisationService.synchroniserDonnees(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Synchronisation terminée')),
+    );
+  },
+),
             ListTile(
               title: const Text('Déconnexion'),
               onTap: () async {

@@ -66,29 +66,36 @@ class ConnexionPage extends StatelessWidget {
                   SizedBox(height: 24),
                   ElevatedButton(
                     onPressed: () async {
-  final utilisateur = await _controller.connecterUtilisateur(
-    _numeroController.text,
-    _motDePasseController.text,
-  );
+                      final utilisateur =
+                          await _controller.connecterUtilisateur(
+                        _numeroController.text,
+                        _motDePasseController.text,
+                      );
 
-  if (utilisateur != null) {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('idUtilisateur', utilisateur.idUtilisateur!); // Stocker l'ID utilisateur
-    await prefs.setString('nomBoutique', utilisateur.nomBoutique);
+                      if (utilisateur != null) {
+                        // Enregistrer les informations de l'utilisateur dans SharedPreferences
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setString(
+                            'idUtilisateur', utilisateur.idUtilisateur!);
+                        await prefs.setString('nom', utilisateur.nom);
+                        await prefs.setString('numero', utilisateur.numero);
+                        await prefs.setString(
+                            'nomBoutique', utilisateur.nomBoutique);
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage()),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Identifiants incorrects')),
-    );
-  }
-},
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(builder: (context) => HomePage()),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Identifiants incorrects')),
+                        );
+                      }
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.blue.shade800,
-                      padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
@@ -103,7 +110,8 @@ class ConnexionPage extends StatelessWidget {
                     onPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => InscriptionPage()),
+                        MaterialPageRoute(
+                            builder: (context) => InscriptionPage()),
                       );
                     },
                     child: Text(

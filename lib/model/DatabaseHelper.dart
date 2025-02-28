@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
 import 'package:stockmanagementversion2/model/produitModel.dart';
+import 'package:stockmanagementversion2/model/venteModel.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper _instance = DatabaseHelper._internal();
@@ -51,7 +52,8 @@ class DatabaseHelper {
         stockMinimum INTEGER,
         dateAjout TEXT,
         categorie TEXT,
-        idUtilisateur TEXT
+        idUtilisateur TEXT,
+        synchronise INTEGER DEFAULT 0
       )
     ''');
 
@@ -61,7 +63,8 @@ class DatabaseHelper {
         date TEXT,
         produitsVendus TEXT,
         montantTotal REAL,
-        idUtilisateur TEXT
+        idUtilisateur TEXT,
+        synchronise INTEGER DEFAULT 0
       )
     ''');
 
@@ -94,9 +97,13 @@ class DatabaseHelper {
   }
 
   Future<void> insertProduit(Map<String, dynamic> produit) async {
-    final db = await database;
-    await db.insert('produits', produit);
-  }
+  final db = await database;
+  await db.insert(
+    'produits',
+    produit,
+    conflictAlgorithm: ConflictAlgorithm.replace, // Remplacer si le produit existe déjà
+  );
+}
 
   Future<List<Map<String, dynamic>>> getProduits(String idUtilisateur) async {
   final db = await database;
@@ -148,6 +155,47 @@ Future<void> deleteVente(String idVente) async {
   );
 }
 
+//synchronisation part********************************************
+
+Future<List<Produit>> getProduitsNonSynchronises(String idUtilisateur) async {
+  final db = await database;
+  final produits = await db.query(
+    'produits',
+    where: 'idUtilisateur = ? AND synchronise = ?',
+    whereArgs: [idUtilisateur, 0], // 0 = non synchronisé
+  );
+  return produits.map((p) => Produit.fromMap(p)).toList();
+}
+
+Future<void> marquerProduitCommeSynchronise(String idProduit) async {
+  final db = await database;
+  await db.update(
+    'produits',
+    {'synchronise': 1}, // 1 = synchronisé
+    where: 'idProduit = ?',
+    whereArgs: [idProduit],
+  );
+}
+
+Future<List<Vente>> getVentesNonSynchronisees(String idUtilisateur) async {
+  final db = await database;
+  final ventes = await db.query(
+    'ventes',
+    where: 'idUtilisateur = ? AND synchronise = ?',
+    whereArgs: [idUtilisateur, 0], // 0 = non synchronisé
+  );
+  return ventes.map((v) => Vente.fromMap(v)).toList();
+}
+
+Future<void> marquerVenteCommeSynchronisee(String idVente) async {
+  final db = await database;
+  await db.update(
+    'ventes',
+    {'synchronise': 1}, // 1 = synchronisé
+    where: 'idVente = ?',
+    whereArgs: [idVente],
+  );
+}
 
 
 }

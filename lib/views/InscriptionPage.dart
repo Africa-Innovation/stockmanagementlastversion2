@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmanagementversion2/controller/utilisateurController.dart';
 import 'package:stockmanagementversion2/model/userModel.dart';
 import 'package:stockmanagementversion2/views/connexionPage.dart';
@@ -10,7 +11,8 @@ class InscriptionPage extends StatelessWidget {
   final TextEditingController _numeroController = TextEditingController();
   final TextEditingController _nomBoutiqueController = TextEditingController();
   final TextEditingController _motDePasseController = TextEditingController();
-  final TextEditingController _confirmMotDePasseController = TextEditingController();
+  final TextEditingController _confirmMotDePasseController =
+      TextEditingController();
   final TextEditingController _codeSecretController = TextEditingController();
 
   @override
@@ -117,49 +119,57 @@ class InscriptionPage extends StatelessWidget {
                     SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () async {
-                        // Vérifier que les mots de passe correspondent
-                        if (_motDePasseController.text != _confirmMotDePasseController.text) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Les mots de passe ne correspondent pas')),
-                          );
-                          return;
-                        }
-                
-                        // Vérifier que le code secret est correct
-                        if (_codeSecretController.text != '@1111') {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Code secret incorrect. Le code doit être @1111')),
-                          );
-                          return;
-                        }
-                
-                        // Créer un nouvel utilisateur
-                        final utilisateur = Utilisateur(
-  idUtilisateur: Uuid().v4(), // Génération d'un UUID unique
-  nom: _nomController.text,
-  numero: _numeroController.text,
-  nomBoutique: _nomBoutiqueController.text,
-  motDePasse: _motDePasseController.text,
-  codeSecret: _codeSecretController.text,
-);
-                
-                        // Enregistrer l'utilisateur dans la base de données
-                        await _controller.inscrireUtilisateur(utilisateur);
-                
-                        // Afficher un message de succès
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Inscription réussie')),
-                        );
-                
-                        // Rediriger vers l'écran de connexion
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(builder: (context) => ConnexionPage()),
-                        );
-                      },
+  // Vérifier que les mots de passe correspondent
+  if (_motDePasseController.text != _confirmMotDePasseController.text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+    );
+    return;
+  }
+
+  // Vérifier que le code secret est correct
+  if (_codeSecretController.text != '@1111') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Code secret incorrect. Le code doit être @1111')),
+    );
+    return;
+  }
+
+  // Créer un nouvel utilisateur
+  final utilisateur = Utilisateur(
+    idUtilisateur: Uuid().v4(), // Génération d'un UUID unique
+    nom: _nomController.text,
+    numero: _numeroController.text,
+    nomBoutique: _nomBoutiqueController.text,
+    motDePasse: _motDePasseController.text,
+    codeSecret: _codeSecretController.text,
+  );
+
+  // Enregistrer l'utilisateur dans la base de données
+  await _controller.inscrireUtilisateur(utilisateur);
+
+  // Enregistrer les informations de l'utilisateur dans SharedPreferences
+  final prefs = await SharedPreferences.getInstance();
+  await prefs.setString('idUtilisateur', utilisateur.idUtilisateur!);
+  await prefs.setString('nom', utilisateur.nom);
+  await prefs.setString('numero', utilisateur.numero);
+  await prefs.setString('nomBoutique', utilisateur.nomBoutique);
+
+  // Afficher un message de succès
+  ScaffoldMessenger.of(context).showSnackBar(
+    SnackBar(content: Text('Inscription réussie')),
+  );
+
+  // Rediriger vers l'écran de connexion
+  Navigator.pushReplacement(
+    context,
+    MaterialPageRoute(builder: (context) => ConnexionPage()),
+  );
+},
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade800,
-                        padding: EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
