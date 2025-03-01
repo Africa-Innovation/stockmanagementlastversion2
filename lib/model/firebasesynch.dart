@@ -11,23 +11,6 @@ class SynchronisationService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> synchroniserDonnees(BuildContext context) async {
-  showDialog(
-    context: context,
-    barrierDismissible: false, // Empêche l'utilisateur de fermer la boîte de dialogue
-    builder: (context) {
-      return AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(), // Indicateur de chargement
-            SizedBox(height: 16),
-            Text('Synchronisation en cours...'),
-          ],
-        ),
-      );
-    },
-  );
-
   try {
     final prefs = await SharedPreferences.getInstance();
     final idUtilisateur = prefs.getString('idUtilisateur');
@@ -36,21 +19,29 @@ class SynchronisationService {
       throw Exception('Utilisateur non connecté');
     }
 
+    print('ID utilisateur récupéré: $idUtilisateur');
+
+    // Vérifier si l'utilisateur existe dans Firestore
+    final userDoc = await _firestore
+        .collection('utilisateurs')
+        .doc(idUtilisateur)
+        .get();
+
+    if (!userDoc.exists) {
+      throw Exception('Utilisateur non trouvé dans Firestore');
+    }
+
+    print('Utilisateur trouvé dans Firestore: $idUtilisateur');
+
     // Synchroniser les données
     await _synchroniserUtilisateur(idUtilisateur);
     await _synchroniserProduits(idUtilisateur);
     await _synchroniserVentes(idUtilisateur);
 
-    // Fermer la boîte de dialogue
-    Navigator.of(context).pop();
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Synchronisation terminée avec succès.')),
     );
   } catch (e) {
-    // Fermer la boîte de dialogue en cas d'erreur
-    Navigator.of(context).pop();
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text('Erreur lors de la synchronisation : $e')),
     );
@@ -144,8 +135,10 @@ Future<void> _synchroniserUtilisateur(String idUtilisateur) async {
   final nom = prefs.getString('nom');
   final numero = prefs.getString('numero');
   final nomBoutique = prefs.getString('nomBoutique');
+  final motDePasse = prefs.getString('motDePasse'); // Récupérer le mot de passe
+  final codeSecret = prefs.getString('codeSecret'); // Récupérer le code secret
 
-  if (nom == null || numero == null || nomBoutique == null) {
+  if (nom == null || numero == null || nomBoutique == null || motDePasse == null || codeSecret == null) {
     throw Exception('Informations utilisateur manquantes');
   }
 
@@ -158,6 +151,8 @@ Future<void> _synchroniserUtilisateur(String idUtilisateur) async {
         'nom': nom,
         'numero': numero,
         'nomBoutique': nomBoutique,
+        'motDePasse': motDePasse, // Ajouter le mot de passe
+        'codeSecret': codeSecret, // Ajouter le code secret
       });
 }
 }

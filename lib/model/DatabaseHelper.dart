@@ -89,10 +89,29 @@ class DatabaseHelper {
   }
 
   // Méthodes pour interagir avec la base de données
-  Future<void> insertUtilisateur(Map<String, dynamic> utilisateur) async {
-    final db = await database;
+ Future<void> insertUtilisateur(Map<String, dynamic> utilisateur) async {
+  final db = await database;
+
+  // Vérifier si l'utilisateur existe déjà
+  final existingUser = await db.query(
+    'utilisateurs',
+    where: 'idUtilisateur = ?',
+    whereArgs: [utilisateur['idUtilisateur']],
+  );
+
+  if (existingUser.isEmpty) {
+    // Insérer l'utilisateur s'il n'existe pas
     await db.insert('utilisateurs', utilisateur);
+  } else {
+    // Mettre à jour l'utilisateur s'il existe déjà
+    await db.update(
+      'utilisateurs',
+      utilisateur,
+      where: 'idUtilisateur = ?',
+      whereArgs: [utilisateur['idUtilisateur']],
+    );
   }
+}
 
   Future<List<Map<String, dynamic>>> getUtilisateurs() async {
     final db = await database;
@@ -253,5 +272,33 @@ Future<void> marquerVenteCommeSynchronisee(String idVente) async {
   );
 }
 
+Future<void> deleteAllLocalData(String idUtilisateur) async {
+  final db = await database;
 
+  // Supprimer les produits
+  await db.delete(
+    'produits',
+    where: 'idUtilisateur = ?',
+    whereArgs: [idUtilisateur],
+  );
+
+  // Supprimer les ventes
+  await db.delete(
+    'ventes',
+    where: 'idUtilisateur = ?',
+    whereArgs: [idUtilisateur],
+  );
+
+  // Supprimer tous les produits vendus (sans condition)
+  await db.delete('produits_vendus');
+
+  // Supprimer l'historique des ventes
+  await db.delete(
+    'historique_ventes',
+    where: 'idUtilisateur = ?',
+    whereArgs: [idUtilisateur],
+  );
+
+  print('Toutes les données locales ont été supprimées pour l\'utilisateur $idUtilisateur');
+}
 }

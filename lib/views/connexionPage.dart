@@ -1,7 +1,9 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmanagementversion2/controller/utilisateurController.dart';
 import 'package:stockmanagementversion2/homePage.dart';
+import 'package:stockmanagementversion2/model/firebasesynch.dart';
 import 'package:stockmanagementversion2/views/InscriptionPage.dart';
 
 class ConnexionPage extends StatelessWidget {
@@ -70,18 +72,65 @@ class ConnexionPage extends StatelessWidget {
                           await _controller.connecterUtilisateur(
                         _numeroController.text,
                         _motDePasseController.text,
+                        context,
                       );
 
                       if (utilisateur != null) {
-                        // Enregistrer les informations de l'utilisateur dans SharedPreferences
                         final prefs = await SharedPreferences.getInstance();
-                        await prefs.setString(
-                            'idUtilisateur', utilisateur.idUtilisateur!);
+                        final idUtilisateur = utilisateur.idUtilisateur!;
+
+                        // Enregistrer les informations de l'utilisateur dans SharedPreferences
+                        await prefs.setString('idUtilisateur', idUtilisateur);
                         await prefs.setString('nom', utilisateur.nom);
                         await prefs.setString('numero', utilisateur.numero);
                         await prefs.setString(
                             'nomBoutique', utilisateur.nomBoutique);
+                        await prefs.setBool('isLoggedIn', true); // Ajouter cette ligne
 
+                        print(
+                            'ID utilisateur enregistré dans SharedPreferences: $idUtilisateur');
+
+                        // Vérifier si des données existent en ligne
+                        final firestore = FirebaseFirestore.instance;
+                        final userDoc = await firestore
+                            .collection('utilisateurs')
+                            .doc(idUtilisateur)
+                            .get();
+
+                        if (userDoc.exists) {
+                          // Demander à l'utilisateur s'il souhaite restaurer les données
+                          final shouldRestore = await showDialog<bool>(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text('Restauration des données'),
+                                content: Text('Vos donnee ont ete restaurer'),
+                                actions: [
+                                  // TextButton(
+                                  //   onPressed: () => Navigator.of(context)
+                                  //       .pop(false), // Refuser
+                                  //   child: Text('Non'),
+                                  // ),
+                                  // ElevatedButton(
+                                  //   onPressed: () => Navigator.of(context)
+                                  //       .pop(true), // Accepter
+                                  //   child: Text('Oui'),
+                                  // ),
+                                ],
+                              );
+                            },
+                          );
+
+                          if (shouldRestore == true) {
+                            // Restaurer les données depuis Firebase
+                            final synchronisationService =
+                                SynchronisationService();
+                            await synchronisationService
+                                .synchroniserDonnees(context);
+                          }
+                        }
+
+                        // Rediriger vers la page d'accueil
                         Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => HomePage()),
