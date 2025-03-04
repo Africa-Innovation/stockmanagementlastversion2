@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart'; // Importation du package intl
+import 'package:intl/intl.dart'; // Pour formater les dates
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:printing/printing.dart';
@@ -23,6 +23,9 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
   double _totalVentes = 0.0;
   bool isLoading = true;
 
+  // Nouveau : État pour gérer le filtre
+  String _filtre = 'Toutes'; // Options : 'Toutes', 'Jour', 'Mois'
+
   @override
   void initState() {
     super.initState();
@@ -30,26 +33,25 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
   }
 
   Future<void> _chargerVentes() async {
-  final prefs = await SharedPreferences.getInstance();
-  final idUtilisateur = prefs.getString('idUtilisateur'); // Récupérer l'ID utilisateur
+    final prefs = await SharedPreferences.getInstance();
+    final idUtilisateur = prefs.getString('idUtilisateur');
 
-  if (idUtilisateur == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Utilisateur non connecté')),
-    );
-    return;
+    if (idUtilisateur == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Utilisateur non connecté')),
+      );
+      return;
+    }
+
+    final ventes = await _controller.obtenirHistoriqueVentes(idUtilisateur);
+    ventes.sort((a, b) => b.date.compareTo(a.date)); // Trier par date (du plus récent au plus ancien)
+    setState(() {
+      _ventes = ventes;
+      _ventesFiltrees = ventes;
+      _calculerTotalVentes();
+      isLoading = false;
+    });
   }
-
-  final ventes = await _controller.obtenirHistoriqueVentes(idUtilisateur); // Utiliser l'ID utilisateur réel
-  // Trier les ventes par date (du plus récent au plus ancien)
-  ventes.sort((a, b) => b.date.compareTo(a.date));
-  setState(() {
-    _ventes = ventes;
-    _ventesFiltrees = ventes;
-    _calculerTotalVentes();
-    isLoading = false;
-  });
-}
 
   void _filtrerVentes(String query) {
     setState(() {
@@ -62,6 +64,31 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
                 vente.idVente.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
+      _calculerTotalVentes();
+    });
+  }
+
+  void _appliquerFiltre(String filtre) {
+    setState(() {
+      _filtre = filtre;
+      _ventesFiltrees = _ventes;
+
+      if (filtre == 'Jour') {
+        // Filtrer les ventes du jour actuel
+        _ventesFiltrees = _ventesFiltrees
+            .where((vente) =>
+                DateFormat('yyyy-MM-dd').format(vente.date) ==
+                DateFormat('yyyy-MM-dd').format(DateTime.now()))
+            .toList();
+      } else if (filtre == 'Mois') {
+        // Filtrer les ventes du mois actuel
+        _ventesFiltrees = _ventesFiltrees
+            .where((vente) =>
+                DateFormat('yyyy-MM').format(vente.date) ==
+                DateFormat('yyyy-MM').format(DateTime.now()))
+            .toList();
+      }
+
       _calculerTotalVentes();
     });
   }
@@ -92,37 +119,37 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
               ),
               pw.SizedBox(height: 10),
               ..._ventesFiltrees.map((vente) {
-  return pw.Container(
-    margin: pw.EdgeInsets.only(bottom: 10),
-    padding: pw.EdgeInsets.all(8),
-    decoration: pw.BoxDecoration(
-        border: pw.Border.all(color: PdfColors.grey)),
-    child: pw.Column(
-      crossAxisAlignment: pw.CrossAxisAlignment.start,
-      children: [
-        pw.Text("ID de la vente: ${vente.idVente}",
-            style: pw.TextStyle(
-                fontSize: 14, fontWeight: pw.FontWeight.bold)),
-        pw.Text("Date: ${vente.date}"),
-        pw.SizedBox(height: 5),
-        pw.Text("Produits vendus :",
-            style: pw.TextStyle(
-                fontWeight: pw.FontWeight.bold, fontSize: 12)),
-        pw.Column(
-          crossAxisAlignment: pw.CrossAxisAlignment.start,
-          children: vente.produitsVendus.map((produit) { // Utilisez produitsVendus
-            return pw.Text(
-                "- ${produit.nom} x${produit.quantiteVendue} : ${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA",
-                style: pw.TextStyle(fontSize: 12));
-          }).toList(),
-        ),
-        pw.Divider(),
-        pw.Text("Total: ${vente.montantTotal.toStringAsFixed(2)} FCFA",
-            style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-      ],
-    ),
-  );
-}).toList(),
+                return pw.Container(
+                  margin: pw.EdgeInsets.only(bottom: 10),
+                  padding: pw.EdgeInsets.all(8),
+                  decoration: pw.BoxDecoration(
+                      border: pw.Border.all(color: PdfColors.grey)),
+                  child: pw.Column(
+                    crossAxisAlignment: pw.CrossAxisAlignment.start,
+                    children: [
+                      pw.Text("ID de la vente: ${vente.idVente}",
+                          style: pw.TextStyle(
+                              fontSize: 14, fontWeight: pw.FontWeight.bold)),
+                      pw.Text("Date: ${vente.date}"),
+                      pw.SizedBox(height: 5),
+                      pw.Text("Produits vendus :",
+                          style: pw.TextStyle(
+                              fontWeight: pw.FontWeight.bold, fontSize: 12)),
+                      pw.Column(
+                        crossAxisAlignment: pw.CrossAxisAlignment.start,
+                        children: vente.produitsVendus.map((produit) {
+                          return pw.Text(
+                              "- ${produit.nom} x${produit.quantiteVendue} : ${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA",
+                              style: pw.TextStyle(fontSize: 12));
+                        }).toList(),
+                      ),
+                      pw.Divider(),
+                      pw.Text("Total: ${vente.montantTotal.toStringAsFixed(2)} FCFA",
+                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
+                    ],
+                  ),
+                );
+              }).toList(),
             ],
           );
         },
@@ -147,6 +174,28 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
         actions: [
+          // Menu déroulant pour choisir le filtre
+          DropdownButton<String>(
+            dropdownColor: Colors.black,
+            value: _filtre,
+            onChanged: (String? newValue) {
+              if (newValue != null) {
+                _appliquerFiltre(newValue);
+              }
+            },
+            items: <String>['Toutes', 'Jour', 'Mois']
+                .map<DropdownMenuItem<String>>((String value) {
+              return DropdownMenuItem<String>(
+                value: value,
+                child: Text(
+                  value,
+                  style: TextStyle(color: Colors.white),
+                ),
+              );
+            }).toList(),
+            icon: Icon(Icons.filter_list, color: Colors.white),
+            underline: Container(), // Supprimer la ligne sous le menu déroulant
+          ),
           IconButton(
             icon: Icon(Icons.download),
             onPressed: _genererPDF,
@@ -198,7 +247,7 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
                         itemBuilder: (context, index) {
                           final vente = _ventesFiltrees[index];
                           String formattedDate = DateFormat('dd/MM/yyyy HH:mm')
-                              .format(vente.date); // Utilisation de DateFormat
+                              .format(vente.date);
 
                           return Card(
                             elevation: 4,
@@ -227,7 +276,6 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
                               trailing: Icon(Icons.arrow_forward,
                                   color: Colors.blue.shade800),
                               onTap: () {
-                                // Naviguer vers les détails de la vente
                                 Navigator.of(context).push(
                                   MaterialPageRoute(
                                     builder: (context) =>

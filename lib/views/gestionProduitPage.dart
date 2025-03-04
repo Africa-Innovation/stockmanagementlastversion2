@@ -14,6 +14,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
   List<Produit> _produits = [];
   List<Produit> _produitsFiltres = []; // Liste des produits filtrés
   TextEditingController _searchController = TextEditingController(); // Contrôleur pour la recherche
+bool _afficherStockFaible = false; // État pour gérer le filtre de stock faible
 
   @override
   void initState() {
@@ -30,19 +31,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
     });
   }
 
-  void _filtrerProduits() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _produitsFiltres = _produits; // Afficher tous les produits si la recherche est vide
-      } else {
-        _produitsFiltres = _produits
-            .where((produit) =>
-                produit.nom.toLowerCase().contains(query)) // Filtrer par nom de produit
-            .toList();
-      }
-    });
-  }
+  
 
  Future<void> _afficherFormulaireAjoutProduit(BuildContext context,
     {Produit? produitExist}) async {
@@ -251,6 +240,35 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
     );
   }
 
+   void _filtrerProduits() {
+  final query = _searchController.text.toLowerCase();
+  setState(() {
+    if (query.isEmpty) {
+      _produitsFiltres = _produits; // Afficher tous les produits si la recherche est vide
+    } else {
+      _produitsFiltres = _produits
+          .where((produit) =>
+              produit.nom.toLowerCase().contains(query)) // Filtrer par nom de produit
+          .toList();
+    }
+
+    // Appliquer le filtre de stock faible si activé
+    if (_afficherStockFaible) {
+      _produitsFiltres = _produitsFiltres
+          .where((produit) => produit.quantite <= produit.stockMinimum)
+          .toList();
+    }
+  });
+}
+
+void _basculerFiltreStockFaible() {
+    setState(() {
+      _afficherStockFaible = !_afficherStockFaible; // Activer/désactiver le filtre
+      _filtrerProduits(); // Appliquer le filtre
+    });
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,6 +276,15 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
         title: Text('Gestion des Produits'),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
+        actions: [
+          IconButton(
+            icon: Icon(
+              _afficherStockFaible ? Icons.filter_alt : Icons.filter_alt_off,
+              color: _afficherStockFaible ? Colors.red : Colors.white,
+            ),
+            onPressed: _basculerFiltreStockFaible, // Basculer le filtre de stock faible
+          ),
+        ],
       ),
       body: Column(
         children: [
