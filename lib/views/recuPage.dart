@@ -7,6 +7,9 @@ import 'package:screenshot/screenshot.dart';
 import 'package:gallery_saver/gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:stockmanagementversion2/model/recuModel.dart';
+import 'package:flutter_esc_pos_utils/flutter_esc_pos_utils.dart';
+import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
+import 'package:image/image.dart' as img;
 
 class RecuPage extends StatefulWidget {
   final Recu recu;
@@ -19,38 +22,85 @@ class RecuPage extends StatefulWidget {
 
 class _RecuPageState extends State<RecuPage> {
   ScreenshotController screenshotController = ScreenshotController();
+  bool _isPrinting = false;
+  List<BluetoothInfo> _bluetoothDevices = [];
+  String? _selectedPrinterMac; // Utilisez `String?` pour autoriser une valeur nulle
 
-  Future<void> _saveReceiptAsImage() async {
+  @override
+  void initState() {
+    super.initState();
+    _getBluetoothDevices();
+  }
+
+  Future<void> _getBluetoothDevices() async {
+    final List<BluetoothInfo> devices = await PrintBluetoothThermal.pairedBluetooths;
+    setState(() {
+      _bluetoothDevices = devices;
+    });
+  }
+
+  Future<void> _printReceiptViaBluetooth() async {
+    if (_selectedPrinterMac == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Veuillez sélectionner une imprimante Bluetooth.')),
+      );
+      return;
+    }
+
+    setState(() {
+      _isPrinting = true;
+    });
+
     try {
-      // Vérifier et demander l'autorisation de stockage
-      if (await Permission.storage.request().isGranted) {
-        final Uint8List? image = await screenshotController.capture();
-        if (image == null) return;
-
-        final directory = await getApplicationDocumentsDirectory();
-        final imagePath =
-            '${directory.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png';
-        final File imageFile = File(imagePath);
-        await imageFile.writeAsBytes(image);
-
-        await GallerySaver.saveImage(imageFile.path,
-            albumName: "StockManagement");
-
+      // Connect to the selected printer
+      final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: _selectedPrinterMac!);
+      if (!isConnected) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
+          SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
+        );
+        return;
+      }
+
+      // Capture the receipt as an image
+      final Uint8List? imageBytes = await screenshotController.capture();
+      if (imageBytes == null) return;
+
+      // Convert the image to a printable format
+      img.Image? image = img.decodeImage(imageBytes);
+      if (image == null) return;
+
+      // Resize the image to fit the printer's width
+      final resizedImage = img.copyResize(image, width: 380); // Adjust width for 58mm printer
+
+      // Generate the print ticket
+      final profile = await CapabilityProfile.load();
+      final generator = Generator(PaperSize.mm58, profile);
+      List<int> bytes = [];
+      bytes += generator.reset();
+      bytes += generator.image(resizedImage);
+      bytes += generator.feed(2);
+      bytes += generator.cut();
+
+      // Send the ticket to the printer
+      final bool result = await PrintBluetoothThermal.writeBytes(bytes);
+      if (result) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reçu imprimé avec succès ! 🖨️')),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content:
-                  Text('Permission refusée, activez l’accès au stockage.')),
+          SnackBar(content: Text('Échec de l\'impression.')),
         );
       }
     } catch (e) {
-      print("Erreur lors de l'enregistrement du reçu : $e");
+      print("Erreur lors de l'impression : $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
+        SnackBar(content: Text('Erreur lors de l\'impression.')),
       );
+    } finally {
+      setState(() {
+        _isPrinting = false;
+      });
     }
   }
 
@@ -102,13 +152,13 @@ class _RecuPageState extends State<RecuPage> {
                             ),
                           ),
                           SizedBox(height: 10),
-                        Text(
-                          'Boutique: ${widget.recu.nomBoutique}', // Afficher le nom de la boutique
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
+                          Text(
+                            'Boutique: ${widget.recu.nomBoutique}',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                        ),
                           SizedBox(height: 10),
                           Text(
                             'ID de la vente: ${widget.recu.idVente}',
@@ -120,11 +170,10 @@ class _RecuPageState extends State<RecuPage> {
                           SizedBox(height: 10),
                           Divider(thickness: 1, color: Colors.black),
                           SizedBox(height: 10),
-                          if (lines.length > 1 && lines[1].contains(': '))
-                            Text(
-                              'Date: ${DateTime.now()}',
-                              style: TextStyle(fontSize: 16),
-                            ),
+                          Text(
+                            'Date: ${DateTime.now()}',
+                            style: TextStyle(fontSize: 16),
+                          ),
                           SizedBox(height: 10),
                           Divider(thickness: 1, color: Colors.black),
                           SizedBox(height: 10),
@@ -175,11 +224,77 @@ class _RecuPageState extends State<RecuPage> {
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
+                SizedBox(height: 20),
+                if (_bluetoothDevices.isEmpty)
+                  Text(
+                    'Aucune imprimante Bluetooth appairée trouvée.',
+                    style: TextStyle(color: Colors.red),
+                  )
+                else
+                  DropdownButton<String>(
+                    value: _selectedPrinterMac,
+                    hint: Text('Sélectionnez une imprimante Bluetooth'),
+                    items: _bluetoothDevices.map((BluetoothInfo device) {
+                      return DropdownMenuItem<String>(
+                        value: device.macAdress,
+                        child: Text(device.name),
+                      );
+                    }).toList(),
+                    onChanged: (String? value) {
+                      setState(() {
+                        _selectedPrinterMac = value;
+                      });
+                    },
+                  ),
+                SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: _isPrinting || _selectedPrinterMac == null
+                      ? null
+                      : _printReceiptViaBluetooth,
+                  icon: Icon(Icons.print),
+                  label: Text(
+                    _isPrinting ? 'Impression en cours...' : 'Imprimer via Bluetooth',
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
               ],
             ),
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _saveReceiptAsImage() async {
+    try {
+      if (await Permission.storage.request().isGranted) {
+        final Uint8List? image = await screenshotController.capture();
+        if (image == null) return;
+
+        final directory = await getApplicationDocumentsDirectory();
+        final imagePath =
+            '${directory.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png';
+        final File imageFile = File(imagePath);
+        await imageFile.writeAsBytes(image);
+
+        await GallerySaver.saveImage(imageFile.path,
+            albumName: "StockManagement");
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content:
+                  Text('Permission refusée, activez l’accès au stockage.')),
+        );
+      }
+    } catch (e) {
+      print("Erreur lors de l'enregistrement du reçu : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
+      );
+    }
   }
 }
