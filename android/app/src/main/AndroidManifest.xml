@@ -7,7 +7,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="stockmanagementversion2"
+        android:label="YA FASSI"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity
