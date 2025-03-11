@@ -31,8 +31,7 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Ravitailler le stock',
-          style: TextStyle(color: Colors.white),),
+          title: Text('Ravitailler le stock'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -98,7 +97,8 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Alertes de Stock'),
+        title: Text('Alertes de Stock',
+        style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
       ),
