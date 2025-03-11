@@ -15,7 +15,8 @@ class DetailsVentePage extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Détails de la Vente'),
+        title: Text('Détails de la Vente',
+        style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
       ),

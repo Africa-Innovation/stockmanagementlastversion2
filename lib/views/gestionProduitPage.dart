@@ -284,7 +284,8 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Gestion des Produits'),
+        title: Text('Gestion des Produits',
+        style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
         actions: [
@@ -395,7 +396,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
           _afficherFormulaireAjoutProduit(context); // Afficher le formulaire d'ajout
         },
         backgroundColor: Colors.blue.shade800,
-        child: Icon(Icons.add),
+        child: Icon(Icons.add,color: Colors.white,),
       ),
     );
   }

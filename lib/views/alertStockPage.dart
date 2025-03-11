@@ -31,7 +31,8 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Ravitailler le stock'),
+          title: Text('Ravitailler le stock',
+          style: TextStyle(color: Colors.white),),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [

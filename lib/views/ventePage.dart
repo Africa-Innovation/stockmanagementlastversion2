@@ -235,8 +235,10 @@ Montant total: ${vente.montantTotal} FCFA
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Ventes'),
+        title: Text('Ventes',
+        style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
+        
         elevation: 8,
       ),
       body: Column(

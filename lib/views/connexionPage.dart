@@ -151,7 +151,8 @@ class ConnexionPage extends StatelessWidget {
                     ),
                     child: Text(
                       'Se Connecter',
-                      style: TextStyle(fontSize: 16),
+                      style: TextStyle(fontSize: 16,
+                      color: Colors.white),
                     ),
                   ),
                   SizedBox(height: 16),
@@ -165,7 +166,7 @@ class ConnexionPage extends StatelessWidget {
                     },
                     child: Text(
                       'Créer un compte',
-                      style: TextStyle(color: Colors.blue.shade800),
+                      style: TextStyle(color: Colors.blue.shade800,),
                     ),
                   ),
                 ],

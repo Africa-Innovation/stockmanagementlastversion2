@@ -199,7 +199,8 @@ class _RecuPageState extends State<RecuPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reçu de Vente'),
+        title: Text('Reçu de Vente',
+        style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
       ),
