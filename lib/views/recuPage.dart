@@ -154,6 +154,15 @@ class _RecuPageState extends State<RecuPage> {
         title: Text('Reçu de Vente', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
+        actions: [
+          IconButton(
+            icon: Icon(Icons.print, color: Colors.white),
+            onPressed: _isPrinting || _selectedPrinterMac == null
+                ? null
+                : _printReceiptViaBluetooth,
+            tooltip: 'Imprimer via Bluetooth',
+          ),
+        ],
       ),
       body: Center(
         child: Padding(
@@ -262,17 +271,6 @@ class _RecuPageState extends State<RecuPage> {
                   icon: Icon(Icons.download),
                   label: Text(
                     'Télécharger le reçu',
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-                SizedBox(height: 20),
-                ElevatedButton.icon(
-                  onPressed: _isPrinting || _selectedPrinterMac == null
-                      ? null
-                      : _printReceiptViaBluetooth,
-                  icon: Icon(Icons.print),
-                  label: Text(
-                    _isPrinting ? 'Impression en cours...' : 'Imprimer via Bluetooth',
                     style: TextStyle(fontSize: 16),
                   ),
                 ),
