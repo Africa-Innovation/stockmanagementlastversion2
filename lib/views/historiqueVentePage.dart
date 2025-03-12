@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmanagementversion2/controller/venteController.dart';
 import 'package:stockmanagementversion2/model/venteModel.dart';
+import 'package:stockmanagementversion2/service/pdf_util.dart';
 import 'package:stockmanagementversion2/views/detailVentePage.dart';
 
 class HistoriqueVentesPage extends StatefulWidget {
@@ -99,72 +100,13 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
   }
 
   Future<void> _genererPDF() async {
-    final pdf = pw.Document();
-
-    pdf.addPage(
-      pw.Page(
-        pageFormat: PdfPageFormat.a4,
-        build: (pw.Context context) {
-          return pw.Column(
-            crossAxisAlignment: pw.CrossAxisAlignment.start,
-            children: [
-              pw.Text("Historique des Ventes",
-                  style: pw.TextStyle(
-                      fontSize: 20, fontWeight: pw.FontWeight.bold)),
-              pw.SizedBox(height: 10),
-              pw.Text(
-                "Total des ventes: ${_totalVentes.toStringAsFixed(2)} FCFA",
-                style:
-                    pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
-              ),
-              pw.SizedBox(height: 10),
-              ..._ventesFiltrees.map((vente) {
-                return pw.Container(
-                  margin: pw.EdgeInsets.only(bottom: 10),
-                  padding: pw.EdgeInsets.all(8),
-                  decoration: pw.BoxDecoration(
-                      border: pw.Border.all(color: PdfColors.grey)),
-                  child: pw.Column(
-                    crossAxisAlignment: pw.CrossAxisAlignment.start,
-                    children: [
-                      pw.Text("ID de la vente: ${vente.idVente}",
-                          style: pw.TextStyle(
-                              fontSize: 14, fontWeight: pw.FontWeight.bold)),
-                      pw.Text("Date: ${vente.date}"),
-                      pw.SizedBox(height: 5),
-                      pw.Text("Produits vendus :",
-                          style: pw.TextStyle(
-                              fontWeight: pw.FontWeight.bold, fontSize: 12)),
-                      pw.Column(
-                        crossAxisAlignment: pw.CrossAxisAlignment.start,
-                        children: vente.produitsVendus.map((produit) {
-                          return pw.Text(
-                              "- ${produit.nom} x${produit.quantiteVendue} : ${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA",
-                              style: pw.TextStyle(fontSize: 12));
-                        }).toList(),
-                      ),
-                      pw.Divider(),
-                      pw.Text("Total: ${vente.montantTotal.toStringAsFixed(2)} FCFA",
-                          style: pw.TextStyle(fontWeight: pw.FontWeight.bold)),
-                    ],
-                  ),
-                );
-              }).toList(),
-            ],
-          );
-        },
-      ),
-    );
-
-    // Enregistrer le PDF dans un fichier
-    final output = await getExternalStorageDirectory();
-    final file = File("${output!.path}/historique_ventes.pdf");
-    await file.writeAsBytes(await pdf.save());
-
-    // Partager le PDF
-    await Printing.sharePdf(
-        bytes: await pdf.save(), filename: "historique_ventes.pdf");
-  }
+  await PDFUtil.genererPDF(
+    titre: "Historique des Ventes",
+    totalVentes: _totalVentes,
+    ventesFiltrees: _ventesFiltrees,
+    fileName: "historique_ventes",
+  );
+}
 
   @override
   Widget build(BuildContext context) {

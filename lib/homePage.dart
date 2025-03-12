@@ -263,6 +263,10 @@ class HomePage extends StatelessWidget {
               leading: Icon(Icons.bar_chart, color: Colors.blueAccent),
               title: const Text('Statistique'),
               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => StatisticPage()),
+                );
                 // Ajoutez ici la navigation vers la page des statistiques
               },
             ),
