@@ -9,21 +9,77 @@ import 'package:stockmanagementversion2/views/gestionProduitPage.dart';
 import 'package:stockmanagementversion2/views/historiqueVentePage.dart';
 import 'package:stockmanagementversion2/views/statisticPage.dart';
 import 'package:stockmanagementversion2/views/ventePage.dart';
+import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 class HomePage extends StatelessWidget {
+  Future<void> _connectToPrinter(String macAddress, BuildContext context) async {
+  try {
+    final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: macAddress);
+    await Future.delayed(Duration(seconds: 2)); // Attendre 2 secondes
+
+    final bool isStillConnected = await PrintBluetoothThermal.connectionStatus;
+    if (isStillConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Connecté à l\'imprimante avec succès !')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
+      );
+    }
+  } catch (e) {
+    print("Erreur lors de la connexion : $e");
+    final bool isConnected = await PrintBluetoothThermal.connectionStatus;
+    if (!isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
+      );
+    }
+  }
+}
+
+  Future<void> _selectPrinter(BuildContext context) async {
+    final List<BluetoothInfo> devices = await PrintBluetoothThermal.pairedBluetooths;
+    final String? selectedPrinterMac = await showDialog<String>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Sélectionnez une imprimante Bluetooth'),
+          content: DropdownButton<String>(
+            hint: Text('Choisissez une imprimante'),
+            items: devices.map((BluetoothInfo device) {
+              return DropdownMenuItem<String>(
+                value: device.macAdress,
+                child: Text(device.name),
+              );
+            }).toList(),
+            onChanged: (String? value) {
+              Navigator.of(context).pop(value);
+            },
+          ),
+        );
+      },
+    );
+
+    if (selectedPrinterMac != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('printer_mac_address', selectedPrinterMac);
+      await _connectToPrinter(selectedPrinterMac, context);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
-            // Ajouter un logo ou une icône personnalisée
             Image.asset(
-              'assets/icon.png', // Remplacez par le chemin de votre logo
+              'assets/icon.png',
               width: 40,
               height: 40,
             ),
-            SizedBox(width: 10), // Espace entre le logo et le titre
+            SizedBox(width: 10),
             Text(
               'YA FASSI',
               style: TextStyle(
@@ -34,14 +90,12 @@ class HomePage extends StatelessWidget {
             ),
           ],
         ),
-        backgroundColor: Colors.blueAccent, // Couleur de fond personnalisée
-        elevation: 10, // Ajouter une ombre
+        backgroundColor: Colors.blueAccent,
+        elevation: 10,
         actions: [
-          // Ajouter des icônes d'action
           IconButton(
             icon: Icon(Icons.sync, color: Colors.white),
             onPressed: () async {
-              // Afficher une boîte de dialogue pour indiquer que la synchronisation est en cours
               showDialog(
                 context: context,
                 barrierDismissible: false,
@@ -64,19 +118,15 @@ class HomePage extends StatelessWidget {
                 final synchronisationService = SynchronisationService();
                 await synchronisationService.synchroniserDonnees(context);
 
-                // Fermer la boîte de dialogue
                 Navigator.of(context).pop();
 
-                // Afficher un message de succès
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text('Synchronisation terminée avec succès.')),
                 );
               } catch (e) {
-                // Fermer la boîte de dialogue en cas d'erreur
                 Navigator.of(context).pop();
 
-                // Afficher un message d'erreur
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                       content: Text('Erreur lors de la synchronisation : $e')),
@@ -130,13 +180,12 @@ class HomePage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.end,
                       children: [
                         CircleAvatar(
-                          radius: 30, // Taille du cercle
-                          backgroundColor:
-                              Colors.white, // Couleur de fond du cercle
+                          radius: 30,
+                          backgroundColor: Colors.white,
                           child: Icon(
-                            Icons.person, // Icône de profil
-                            size: 40, // Taille de l'icône
-                            color: Colors.blueAccent, // Couleur de l'icône
+                            Icons.person,
+                            size: 40,
+                            color: Colors.blueAccent,
                           ),
                         ),
                         SizedBox(height: 5),
@@ -168,10 +217,8 @@ class HomePage extends StatelessWidget {
                 }
               },
             ),
-            
             ListTile(
-              leading: Icon(Icons.inventory,
-                  color: Colors.blueAccent), // Icône pour Gestion Produits
+              leading: Icon(Icons.inventory, color: Colors.blueAccent),
               title: Text('Gestion Produits'),
               onTap: () {
                 Navigator.push(
@@ -182,8 +229,7 @@ class HomePage extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.shopping_cart,
-                  color: Colors.blueAccent), // Icône pour Ventes Page
+              leading: Icon(Icons.shopping_cart, color: Colors.blueAccent),
               title: Text('Ventes Page'),
               onTap: () {
                 Navigator.push(
@@ -193,8 +239,7 @@ class HomePage extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.history,
-                  color: Colors.blueAccent), // Icône pour Historique Ventes
+              leading: Icon(Icons.history, color: Colors.blueAccent),
               title: const Text('Historique Ventes'),
               onTap: () {
                 Navigator.push(
@@ -205,8 +250,7 @@ class HomePage extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.warning,
-                  color: Colors.blueAccent), // Icône pour Alertes Stock
+              leading: Icon(Icons.warning, color: Colors.blueAccent),
               title: const Text('Alertes Stock'),
               onTap: () {
                 Navigator.push(
@@ -216,19 +260,16 @@ class HomePage extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.bar_chart,
-                  color: Colors.blueAccent), // Icône pour Statistique
+              leading: Icon(Icons.bar_chart, color: Colors.blueAccent),
               title: const Text('Statistique'),
               onTap: () {
                 // Ajoutez ici la navigation vers la page des statistiques
               },
             ),
             ListTile(
-              leading: Icon(Icons.sync,
-                  color: Colors.blueAccent), // Icône pour Synchro
+              leading: Icon(Icons.sync, color: Colors.blueAccent),
               title: const Text('Synchro'),
               onTap: () async {
-                // Afficher une boîte de dialogue pour indiquer que la synchronisation est en cours
                 showDialog(
                   context: context,
                   barrierDismissible: false,
@@ -251,19 +292,15 @@ class HomePage extends StatelessWidget {
                   final synchronisationService = SynchronisationService();
                   await synchronisationService.synchroniserDonnees(context);
 
-                  // Fermer la boîte de dialogue
                   Navigator.of(context).pop();
 
-                  // Afficher un message de succès
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content: Text('Synchronisation terminée avec succès.')),
                   );
                 } catch (e) {
-                  // Fermer la boîte de dialogue en cas d'erreur
                   Navigator.of(context).pop();
 
-                  // Afficher un message d'erreur
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
                         content:
@@ -273,11 +310,16 @@ class HomePage extends StatelessWidget {
               },
             ),
             ListTile(
-              leading: Icon(Icons.logout,
-                  color: Colors.blueAccent), // Icône pour Déconnexion
+              leading: Icon(Icons.print, color: Colors.blueAccent),
+              title: const Text('Configurer l\'imprimante'),
+              onTap: () async {
+                await _selectPrinter(context);
+              },
+            ),
+            ListTile(
+              leading: Icon(Icons.logout, color: Colors.blueAccent),
               title: const Text('Déconnexion'),
               onTap: () async {
-                // Afficher une boîte de dialogue pour demander la synchronisation avant la déconnexion
                 final shouldSync = await showDialog<bool>(
                   context: context,
                   builder: (context) {
@@ -289,12 +331,12 @@ class HomePage extends StatelessWidget {
                       actions: [
                         TextButton(
                           onPressed: () =>
-                              Navigator.of(context).pop(false), // Refuser
+                              Navigator.of(context).pop(false),
                           child: Text('Non'),
                         ),
                         ElevatedButton(
                           onPressed: () =>
-                              Navigator.of(context).pop(true), // Accepter
+                              Navigator.of(context).pop(true),
                           child: Text('Oui'),
                         ),
                       ],
@@ -302,13 +344,11 @@ class HomePage extends StatelessWidget {
                   },
                 );
 
-                // Si l'utilisateur ferme la boîte de dialogue sans choisir "Oui" ou "Non", on ne fait rien
                 if (shouldSync == null) {
-                  return; // On quitte la fonction sans rien faire
+                  return;
                 }
 
                 if (shouldSync == true) {
-                  // Afficher une boîte de dialogue pour indiquer que la synchronisation est en cours
                   showDialog(
                     context: context,
                     barrierDismissible: false,
@@ -331,20 +371,16 @@ class HomePage extends StatelessWidget {
                     final synchronisationService = SynchronisationService();
                     await synchronisationService.synchroniserDonnees(context);
 
-                    // Fermer la boîte de dialogue
                     Navigator.of(context).pop();
 
-                    // Afficher un message de succès
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content:
                               Text('Synchronisation terminée avec succès.')),
                     );
                   } catch (e) {
-                    // Fermer la boîte de dialogue en cas d'erreur
                     Navigator.of(context).pop();
 
-                    // Afficher un message d'erreur
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                           content:
@@ -353,7 +389,6 @@ class HomePage extends StatelessWidget {
                   }
                 }
 
-                // Supprimer les données locales
                 final prefs = await SharedPreferences.getInstance();
                 final idUtilisateur = prefs.getString('idUtilisateur');
 
@@ -361,19 +396,16 @@ class HomePage extends StatelessWidget {
                   final dbHelper = DatabaseHelper();
                   await dbHelper.deleteAllLocalData(idUtilisateur);
 
-                  // Déconnecter l'utilisateur
                   await prefs.setBool('isLoggedIn', false);
                   await prefs.remove('idUtilisateur');
                   await prefs.remove('nom');
                   await prefs.remove('numero');
                   await prefs.remove('nomBoutique');
 
-                  // Afficher un message de succès
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text('Déconnexion réussie.')),
                   );
 
-                  // Rediriger vers la page de connexion
                   Navigator.pushReplacement(
                     context,
                     MaterialPageRoute(builder: (context) => ConnexionPage()),

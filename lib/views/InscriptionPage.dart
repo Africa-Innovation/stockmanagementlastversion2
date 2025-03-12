@@ -368,7 +368,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
     // Vérifier que le code secret est correct
     if (_codeSecretController.text != '@1111') {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Code secret incorrect. Le code doit être @1111')),
+        SnackBar(content: Text('Code secret incorrect.')),
       );
       return;
     }
