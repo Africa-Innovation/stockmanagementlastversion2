@@ -23,6 +23,10 @@ class _StatisticPageState extends State<StatisticPage>
 
   late TabController _tabController;
 
+  int _nombreTotalVentes = 0;
+  int _nombreTotalProduitsVendus = 0;
+
+
   @override
   void initState() {
     super.initState();
@@ -40,7 +44,9 @@ Future<void> _genererPDF() async {
     titre: "Statistiques des Ventes",
     totalVentes: _totalVentes,
     ventesFiltrees: _ventesFiltrees,
-    topProduits: _topProduits, // Ajouter les produits les plus vendus
+    topProduits: _topProduits,
+    nombreTotalVentes: _nombreTotalVentes, // Nouveau paramètre
+    nombreTotalProduitsVendus: _nombreTotalProduitsVendus, // Nouveau paramètre
     fileName: "statistiques_ventes",
   );
 }
@@ -94,6 +100,13 @@ Future<void> _genererPDF() async {
       _totalVentes = _ventesFiltrees.fold(
           0.0, (total, vente) => total + vente.montantTotal);
 
+      // Calculer le nombre total de ventes
+      _nombreTotalVentes = _ventesFiltrees.length;
+
+      // Calculer le nombre total de produits vendus
+      _nombreTotalProduitsVendus = _ventesFiltrees.fold(
+          0, (total, vente) => total + vente.produitsVendus.length);
+
       // Calculer les produits les plus vendus
       _topProduits = {};
       for (var vente in _ventesFiltrees) {
@@ -141,6 +154,11 @@ Future<void> _genererPDF() async {
         ),
       ],
         bottom: TabBar(
+          
+            labelColor: const Color.fromARGB(255, 204, 215, 224), // Couleur du texte pour l'onglet sélectionné
+            unselectedLabelColor: Colors.white, // Couleur du texte pour les onglets non sélectionnés
+            labelStyle: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            unselectedLabelStyle: TextStyle(fontSize: 16),
           controller: _tabController,
           tabs: [
             Tab(text: 'Ventes'),
@@ -205,6 +223,38 @@ Future<void> _genererPDF() async {
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Nombre total de ventes :',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '$_nombreTotalVentes',
+                  style: TextStyle(fontSize: 16, color: Colors.blue),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Nombre total de produits vendus :',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '$_nombreTotalProduitsVendus',
+                  style: TextStyle(fontSize: 16, color: Colors.blue),
                 ),
               ],
             ),

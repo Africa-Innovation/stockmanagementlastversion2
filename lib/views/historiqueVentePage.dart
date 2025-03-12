@@ -26,6 +26,10 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
 
   // Nouveau : État pour gérer le filtre
   String _filtre = 'Toutes'; // Options : 'Toutes', 'Jour', 'Mois'
+  // Nouveaux paramètres
+  int _nombreTotalVentes = 0;
+  int _nombreTotalProduitsVendus = 0;
+
 
   @override
   void initState() {
@@ -94,10 +98,17 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
     });
   }
 
-  void _calculerTotalVentes() {
-    _totalVentes =
-        _ventesFiltrees.fold(0.0, (total, vente) => total + vente.montantTotal);
-  }
+ void _calculerTotalVentes() {
+  _totalVentes =
+      _ventesFiltrees.fold(0.0, (total, vente) => total + vente.montantTotal);
+
+  // Calculer le nombre total de ventes
+  _nombreTotalVentes = _ventesFiltrees.length;
+
+  // Calculer le nombre total de produits vendus
+  _nombreTotalProduitsVendus = _ventesFiltrees.fold(
+      0, (total, vente) => total + vente.produitsVendus.length);
+}
 
   Future<void> _genererPDF() async {
   await PDFUtil.genererPDF(
@@ -105,6 +116,8 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
     totalVentes: _totalVentes,
     ventesFiltrees: _ventesFiltrees,
     fileName: "historique_ventes",
+     nombreTotalVentes: _nombreTotalVentes, // Nouveau paramètre
+    nombreTotalProduitsVendus: _nombreTotalProduitsVendus, // Nouveau paramètre
   );
 }
 

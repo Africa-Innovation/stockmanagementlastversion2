@@ -7,12 +7,16 @@ import 'package:printing/printing.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:stockmanagementversion2/model/venteModel.dart';
 
+// utils/pdf_util.dart
+
 class PDFUtil {
   static Future<void> genererPDF({
     required String titre,
     required double totalVentes,
     required List<Vente> ventesFiltrees,
-    Map<String, int>? topProduits, // Rendre ce paramètre facultatif
+    Map<String, int>? topProduits,
+    required int nombreTotalVentes, // Nouveau paramètre
+    required int nombreTotalProduitsVendus, // Nouveau paramètre
     required String fileName,
   }) async {
     final pdf = pw.Document();
@@ -91,6 +95,11 @@ class PDFUtil {
               "Total des ventes: ${totalVentes.toStringAsFixed(2)} FCFA",
               style: pw.TextStyle(fontSize: 16, fontWeight: pw.FontWeight.bold),
             ),
+            pw.SizedBox(height: 10),
+            pw.Text("Nombre total de ventes : $nombreTotalVentes",
+                style: pw.TextStyle(fontSize: 14)),
+            pw.Text("Nombre total de produits vendus : $nombreTotalProduitsVendus",
+                style: pw.TextStyle(fontSize: 14)),
             pw.SizedBox(height: 10),
             pw.Text("Détails des ventes :",
                 style: pw.TextStyle(
