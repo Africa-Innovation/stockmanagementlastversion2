@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stockmanagementversion2/controller/produitController.dart';
 import 'package:stockmanagementversion2/model/DatabaseHelper.dart';
 import 'package:stockmanagementversion2/model/firebasesynch.dart';
 import 'package:stockmanagementversion2/views/alertStockPage.dart';
@@ -67,6 +68,14 @@ class HomePage extends StatelessWidget {
       await _connectToPrinter(selectedPrinterMac, context);
     }
   }
+  final ProduitController _controller = ProduitController();
+
+
+  Future<bool> _aDesProduitsEnAlerte() async {
+    final produitsEnAlerte = await _controller.verifierAlertesStock();
+    return produitsEnAlerte.isNotEmpty;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -249,14 +258,37 @@ class HomePage extends StatelessWidget {
                 );
               },
             ),
-            ListTile(
-              leading: Icon(Icons.warning, color: Colors.blueAccent),
-              title: const Text('Alertes Stock'),
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => AlertesStockPage()),
-                );
+            FutureBuilder<bool>(
+              future: _aDesProduitsEnAlerte(),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return ListTile(
+                    leading: Icon(Icons.warning, color: Colors.blueAccent),
+                    title: Text('Alertes Stock'),
+                  );
+                } else if (snapshot.hasError) {
+                  return ListTile(
+                    leading: Icon(Icons.warning, color: Colors.blueAccent),
+                    title: Text('Alertes Stock'),
+                  );
+                } else {
+                  final hasAlerts = snapshot.data ?? false;
+                  return ListTile(
+                    leading: Icon(Icons.warning, color: Colors.blueAccent),
+                    title: Text(
+                      'Alertes Stock',
+                      style: TextStyle(
+                        color: hasAlerts ? Colors.red : Colors.black,
+                      ),
+                    ),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => AlertesStockPage()),
+                      );
+                    },
+                  );
+                }
               },
             ),
             ListTile(
