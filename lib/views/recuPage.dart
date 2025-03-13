@@ -154,6 +154,7 @@ class _RecuPageState extends State<RecuPage> {
         title: Text('Reçu de Vente', style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           IconButton(
             icon: Icon(Icons.print, color: Colors.white),

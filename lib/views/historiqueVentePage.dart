@@ -129,6 +129,7 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
         style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
+        iconTheme: IconThemeData(color: Colors.white),
         actions: [
           // Menu déroulant pour choisir le filtre
           DropdownButton<String>(
@@ -153,6 +154,7 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
             underline: Container(), // Supprimer la ligne sous le menu déroulant
           ),
           IconButton(
+            color: Colors.white,
             icon: Icon(Icons.download),
             onPressed: _genererPDF,
           ),

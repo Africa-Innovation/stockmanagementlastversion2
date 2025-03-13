@@ -147,8 +147,10 @@ Future<void> _genererPDF() async {
             style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
          elevation: 8,
+         iconTheme: IconThemeData(color: Colors.white),
       actions: [
         IconButton(
+          color: Colors.white,
           icon: Icon(Icons.download),
           onPressed: _genererPDF,
         ),

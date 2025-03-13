@@ -101,6 +101,7 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
         style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
+        iconTheme: IconThemeData(color: Colors.white),
       ),
       body: ListView.builder(
         itemCount: _produitsEnAlerte.length,

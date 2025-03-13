@@ -240,6 +240,7 @@ Montant total: ${vente.montantTotal} FCFA
         backgroundColor: Colors.blue.shade800,
         
         elevation: 8,
+        iconTheme: IconThemeData(color: Colors.white), // Changer la couleur de l'icône de retour
       ),
       body: Column(
         children: [
@@ -353,7 +354,7 @@ Montant total: ${vente.montantTotal} FCFA
                   ),
                   child: Text(
                     'Valider la Vente',
-                    style: TextStyle(fontSize: 16),
+                    style: TextStyle(fontSize: 16,color: Colors.white),
                   ),
                 ),
               ],

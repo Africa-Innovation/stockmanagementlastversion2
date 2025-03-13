@@ -244,7 +244,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red, // Couleur rouge pour indiquer une action critique
               ),
-              child: Text('Supprimer'),
+              child: const Text('Supprimer',style: TextStyle(color: Colors.white),),
             ),
           ],
         );
@@ -288,6 +288,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
         style: TextStyle(color: Colors.white)),
         backgroundColor: Colors.blue.shade800,
         elevation: 8,
+        iconTheme: IconThemeData(color: Colors.white), // Changer la couleur de l'icône de retour
         actions: [
           IconButton(
             icon: Icon(
