@@ -26,12 +26,15 @@ class HomePage extends StatelessWidget {
     return 150000.0; // Exemple de valeur
   }
 
-  Future<void> _connectToPrinter(String macAddress, BuildContext context) async {
+  Future<void> _connectToPrinter(
+      String macAddress, BuildContext context) async {
     try {
-      final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: macAddress);
+      final bool isConnected =
+          await PrintBluetoothThermal.connect(macPrinterAddress: macAddress);
       await Future.delayed(Duration(seconds: 2)); // Attendre 2 secondes
 
-      final bool isStillConnected = await PrintBluetoothThermal.connectionStatus;
+      final bool isStillConnected =
+          await PrintBluetoothThermal.connectionStatus;
       if (isStillConnected) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Connecté à l\'imprimante avec succès !')),
@@ -46,14 +49,16 @@ class HomePage extends StatelessWidget {
       final bool isConnected = await PrintBluetoothThermal.connectionStatus;
       if (!isConnected) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
+          SnackBar(
+              content: Text('Erreur lors de la connexion à l\'imprimante.')),
         );
       }
     }
   }
 
   Future<void> _selectPrinter(BuildContext context) async {
-    final List<BluetoothInfo> devices = await PrintBluetoothThermal.pairedBluetooths;
+    final List<BluetoothInfo> devices =
+        await PrintBluetoothThermal.pairedBluetooths;
     final String? selectedPrinterMac = await showDialog<String>(
       context: context,
       builder: (context) {
@@ -90,194 +95,201 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Row(
-          children: [
-            Image.asset(
-              'assets/icon.png',
-              width: 40,
-              height: 40,
-            ),
-            SizedBox(width: 10),
-            Text(
-              'YA FASSI',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
+        appBar: AppBar(
+          title: Row(
+            children: [
+              Image.asset(
+                'assets/icon.png',
+                width: 40,
+                height: 40,
               ),
-            ),
-          ],
-        ),
-        backgroundColor: Colors.blueAccent,
-        elevation: 10,
-        iconTheme: IconThemeData(color: Colors.white),
-        actions: [
-          IconButton(
-      icon: Icon(Icons.person, color: Colors.white),
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => ProfilPage()),
-        );
-      },
-    ),
-          IconButton(
-            icon: Icon(Icons.sync, color: Colors.white),
-            onPressed: () async {
-              showDialog(
-                context: context,
-                barrierDismissible: false,
-                builder: (context) {
-                  return AlertDialog(
-                    content: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircularProgressIndicator(),
-                        SizedBox(height: 16),
-                        Text(
-                            'Synchronisation en cours...Ce processus utilise la connexion internet'),
-                      ],
-                    ),
-                  );
-                },
-              );
-
-              try {
-                final synchronisationService = SynchronisationService();
-                await synchronisationService.synchroniserDonnees(context);
-
-                Navigator.of(context).pop();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('Synchronisation terminée avec succès.')),
-                );
-              } catch (e) {
-                Navigator.of(context).pop();
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                      content: Text('Erreur lors de la synchronisation : $e')),
-                );
-              }
-            },
+              SizedBox(width: 10),
+              Text(
+                'YA FASSI',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Tableau de bord',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+          backgroundColor: Colors.blueAccent,
+          elevation: 10,
+          iconTheme: IconThemeData(color: Colors.white),
+          actions: [
+            IconButton(
+              icon: Icon(Icons.person, color: Colors.white),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfilPage()),
+                );
+              },
             ),
-            SizedBox(height: 20),
-            FutureBuilder<int>(
-              future: _getNombreProduitsEnAlerte(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Erreur de chargement');
-                } else {
-                  final nombreAlertes = snapshot.data ?? 0;
-                  return Card(
-                    elevation: 4,
-                    child: ListTile(
-                      leading: Icon(Icons.warning, color: Colors.red),
-                      title: Text('Alertes de stock'),
-                      subtitle: Text('$nombreAlertes produits en alerte'),
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => AlertesStockPage()),
-                        );
-                      },
-                    ),
+            IconButton(
+              icon: Icon(Icons.sync, color: Colors.white),
+              onPressed: () async {
+                showDialog(
+                  context: context,
+                  barrierDismissible: false,
+                  builder: (context) {
+                    return AlertDialog(
+                      content: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text(
+                              'Synchronisation en cours...Ce processus utilise la connexion internet'),
+                        ],
+                      ),
+                    );
+                  },
+                );
+
+                try {
+                  final synchronisationService = SynchronisationService();
+                  await synchronisationService.synchroniserDonnees(context);
+
+                  Navigator.of(context).pop();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content: Text('Synchronisation terminée avec succès.')),
+                  );
+                } catch (e) {
+                  Navigator.of(context).pop();
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                        content:
+                            Text('Erreur lors de la synchronisation : $e')),
                   );
                 }
               },
             ),
-            SizedBox(height: 10),
-            FutureBuilder<double>(
-              future: _getVentesDuJour(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return CircularProgressIndicator();
-                } else if (snapshot.hasError) {
-                  return Text('Erreur de chargement');
-                } else {
-                  final ventesDuJour = snapshot.data ?? 0.0;
-                  return Card(
-                    elevation: 4,
-                    child: ListTile(
-                      leading: Icon(Icons.shopping_cart, color: Colors.green),
-                      title: Text('Ventes du jour'),
-                      subtitle: Text('$ventesDuJour FCFA'),
-                      onTap: () {
+          ],
+        ),
+        body: SingleChildScrollView(
+            child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Tableau de bord',
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 20),
+              FutureBuilder<int>(
+                future: _getNombreProduitsEnAlerte(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Erreur de chargement');
+                  } else {
+                    final nombreAlertes = snapshot.data ?? 0;
+                    return Card(
+                      elevation: 4,
+                      child: ListTile(
+                        leading: Icon(Icons.warning, color: Colors.red),
+                        title: Text('Alertes de stock'),
+                        subtitle: Text('$nombreAlertes produits en alerte'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => AlertesStockPage()),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                },
+              ),
+              SizedBox(height: 10),
+              FutureBuilder<double>(
+                future: _getVentesDuJour(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return CircularProgressIndicator();
+                  } else if (snapshot.hasError) {
+                    return Text('Erreur de chargement');
+                  } else {
+                    final ventesDuJour = snapshot.data ?? 0.0;
+                    return Card(
+                      elevation: 4,
+                      child: ListTile(
+                        leading: Icon(Icons.shopping_cart, color: Colors.green),
+                        title: Text('Ventes du jour'),
+                        subtitle: Text('$ventesDuJour FCFA'),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => VentesPage()),
+                          );
+                        },
+                      ),
+                    );
+                  }
+                },
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Actions rapides',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => GestionProduitsPage()),
+                        );
+                      },
+                      icon: Icon(Icons.inventory),
+                      label: Text('Gérer les produits'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (context) => VentesPage()),
                         );
                       },
-                    ),
-                  );
-                }
-              },
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Actions rapides',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => GestionProduitsPage()),
-                      );
-                    },
-                    icon: Icon(Icons.inventory),
-                    label: Text('Gérer les produits'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
+                      icon: Icon(Icons.shopping_cart),
+                      label: Text('Nouvelle vente'),
+                      style: ElevatedButton.styleFrom(
+                        padding: EdgeInsets.symmetric(vertical: 16),
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(width: 10),
-                Expanded(
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => VentesPage()),
-                      );
-                    },
-                    icon: Icon(Icons.shopping_cart),
-                    label: Text('Nouvelle vente'),
-                    style: ElevatedButton.styleFrom(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            SizedBox(height: 20),
-            Text(
-              'Autres fonctionnalités',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
-            SizedBox(height: 10),
-            Expanded(
-              child: GridView(
+                ],
+              ),
+              SizedBox(height: 20),
+              Text(
+                'Autres fonctionnalités',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              SizedBox(height: 10),
+              GridView(
+                shrinkWrap:
+                    true, // Permet au GridView de s'adapter à la hauteur de son contenu
+                physics:
+                    NeverScrollableScrollPhysics(), // Désactive le défilement interne
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
@@ -290,7 +302,8 @@ class HomePage extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => HistoriqueVentesPage()),
+                        MaterialPageRoute(
+                            builder: (context) => HistoriqueVentesPage()),
                       );
                     },
                   ),
@@ -300,7 +313,8 @@ class HomePage extends StatelessWidget {
                     onTap: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => StatisticPage()),
+                        MaterialPageRoute(
+                            builder: (context) => StatisticPage()),
                       );
                     },
                   ),
@@ -323,11 +337,9 @@ class HomePage extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-          ],
-        ),
-      ),
-    );
+            ],
+          ),
+        )));
   }
 
   Widget _buildFeatureCard({

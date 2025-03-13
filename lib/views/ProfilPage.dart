@@ -62,7 +62,10 @@ class ProfilPage extends StatelessWidget {
         );
       },
     );
-
+    // Si l'utilisateur ferme la boîte de dialogue sans choisir, on ne fait rien
+  if (shouldSync == null) {
+    return;
+  }
     if (shouldSync == true) {
       await _synchroniserDonnees(context);
     }
@@ -95,7 +98,7 @@ class ProfilPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Profil'),
+        title: Text('Profil', style: TextStyle(color: Colors.white),),
         backgroundColor: Colors.blueAccent,
         elevation: 10,
         iconTheme: IconThemeData(color: Colors.white),
@@ -152,6 +155,7 @@ class ProfilPage extends StatelessWidget {
                   ),
                   SizedBox(height: 20),
                   ElevatedButton.icon(
+                    
                     onPressed: () => _synchroniserDonnees(context),
                     icon: Icon(Icons.sync),
                     label: Text('Synchroniser les données'),
@@ -163,7 +167,7 @@ class ProfilPage extends StatelessWidget {
                   ElevatedButton.icon(
                     onPressed: () => _deconnecterUtilisateur(context),
                     icon: Icon(Icons.logout),
-                    label: Text('Déconnexion'),
+                    label: Text('Déconnexion',style: TextStyle(color: Colors.white),),
                     style: ElevatedButton.styleFrom(
                       padding: EdgeInsets.symmetric(vertical: 16),
                       backgroundColor: Colors.red,
