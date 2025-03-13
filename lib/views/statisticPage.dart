@@ -105,7 +105,11 @@ Future<void> _genererPDF() async {
 
       // Calculer le nombre total de produits vendus
       _nombreTotalProduitsVendus = _ventesFiltrees.fold(
-          0, (total, vente) => total + vente.produitsVendus.length);
+    0, (total, vente) {
+      // Additionner les quantités vendues de chaque produit dans la vente
+      return total + vente.produitsVendus.fold(
+          0, (sum, produit) => sum + produit.quantiteVendue);
+    });
 
       // Calculer les produits les plus vendus
       _topProduits = {};

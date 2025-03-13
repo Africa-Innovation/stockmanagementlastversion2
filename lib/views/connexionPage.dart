@@ -69,40 +69,45 @@ class ConnexionPage extends StatelessWidget {
                     SizedBox(height: 24),
                     ElevatedButton(
                       onPressed: () async {
-  final utilisateur = await _controller.connecterUtilisateur(
-    _numeroController.text,
-    _motDePasseController.text,
-    context,
-  );
+                        final utilisateur =
+                            await _controller.connecterUtilisateur(
+                          _numeroController.text,
+                          _motDePasseController.text,
+                          context,
+                        );
 
-  if (utilisateur != null) {
-    final prefs = await SharedPreferences.getInstance();
-    final idUtilisateur = utilisateur.idUtilisateur!;
+                        if (utilisateur != null) {
+                          final prefs = await SharedPreferences.getInstance();
+                          final idUtilisateur = utilisateur.idUtilisateur!;
 
-    // Enregistrer les informations de l'utilisateur dans SharedPreferences
-    await prefs.setString('idUtilisateur', idUtilisateur);
-    await prefs.setString('nom', utilisateur.nom);
-    await prefs.setString('numero', utilisateur.numero);
-    await prefs.setString('nomBoutique', utilisateur.nomBoutique);
-    await prefs.setBool('isLoggedIn', true);
+                          // Enregistrer les informations de l'utilisateur dans SharedPreferences
+                          await prefs.setString('idUtilisateur', idUtilisateur);
+                          await prefs.setString('nom', utilisateur.nom);
+                          await prefs.setString('numero', utilisateur.numero);
+                          await prefs.setString(
+                              'nomBoutique', utilisateur.nomBoutique);
+                          await prefs.setBool('isLoggedIn', true);
 
-    print('ID utilisateur enregistré dans SharedPreferences: $idUtilisateur');
+                          print(
+                              'ID utilisateur enregistré dans SharedPreferences: $idUtilisateur');
 
-    // Restaurer les données depuis Firebase
-    final synchronisationService = SynchronisationService();
-    await synchronisationService.restaurerDonnees(context);
+                          // Restaurer les données depuis Firebase
+                          final synchronisationService =
+                              SynchronisationService();
+                          await synchronisationService
+                              .restaurerDonnees(context);
 
-    // Rediriger vers la page d'accueil
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(builder: (context) => HomePage()),
-    );
-  } else {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Identifiants incorrects')),
-    );
-  }
-},
+                          // Rediriger vers la page d'accueil
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(builder: (context) => HomePage()),
+                          );
+                        } else {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Identifiants incorrects')),
+                          );
+                        }
+                      },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade800,
                         padding:
@@ -113,8 +118,7 @@ class ConnexionPage extends StatelessWidget {
                       ),
                       child: Text(
                         'Se Connecter',
-                        style: TextStyle(fontSize: 16,
-                        color: Colors.white),
+                        style: TextStyle(fontSize: 16, color: Colors.white),
                       ),
                     ),
                     SizedBox(height: 16),
@@ -128,7 +132,9 @@ class ConnexionPage extends StatelessWidget {
                       },
                       child: Text(
                         'Créer un compte',
-                        style: TextStyle(color: Colors.blue.shade800,),
+                        style: TextStyle(
+                          color: Colors.blue.shade800,
+                        ),
                       ),
                     ),
                   ],

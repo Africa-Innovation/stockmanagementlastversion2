@@ -357,66 +357,74 @@ class _InscriptionPageState extends State<InscriptionPage> {
   }
 
   Future<void> _handleInscription() async {
-    // Vérifier que les mots de passe correspondent
-    if (_motDePasseController.text != _confirmMotDePasseController.text) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Les mots de passe ne correspondent pas')),
-      );
-      return;
-    }
-
-    // Vérifier que le code secret est correct
-    if (_codeSecretController.text != '@1111') {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Code secret incorrect.')),
-      );
-      return;
-    }
-
-    setState(() {
-      _isLoading = true; // Activer le chargement
-    });
-
-    try {
-      // Créer un nouvel utilisateur
-      final utilisateur = Utilisateur(
-        idUtilisateur: Uuid().v4(), // Génération d'un UUID unique
-        nom: _nomController.text,
-        numero: _numeroController.text,
-        nomBoutique: _nomBoutiqueController.text,
-        motDePasse: _motDePasseController.text,
-        codeSecret: _codeSecretController.text,
-      );
-
-      // Enregistrer l'utilisateur dans la base de données
-      await _controller.inscrireUtilisateur(utilisateur);
-
-      // Enregistrer les informations de l'utilisateur dans SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('idUtilisateur', utilisateur.idUtilisateur!);
-      await prefs.setString('nom', utilisateur.nom);
-      await prefs.setString('numero', utilisateur.numero);
-      await prefs.setString('nomBoutique', utilisateur.nomBoutique);
-
-      // Afficher un message de succès
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Inscription réussie')),
-      );
-
-      // Rediriger vers l'écran de connexion
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => ConnexionPage()),
-      );
-    } catch (e) {
-      // Afficher un message d'erreur en cas d'échec
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de l\'inscription : $e')),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false; // Désactiver le chargement
-      });
-    }
+  // Vérifier que le mot de passe a au moins 4 caractères
+  if (_motDePasseController.text.length < 4) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Le mot de passe doit contenir au moins 4 caractères')),
+    );
+    return;
   }
+
+  // Vérifier que les mots de passe correspondent
+  if (_motDePasseController.text != _confirmMotDePasseController.text) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Les mots de passe ne correspondent pas')),
+    );
+    return;
+  }
+
+  // Vérifier que le code secret est correct
+  if (_codeSecretController.text != '@1111') {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Code secret incorrect.')),
+    );
+    return;
+  }
+
+  setState(() {
+    _isLoading = true; // Activer le chargement
+  });
+
+  try {
+    // Créer un nouvel utilisateur
+    final utilisateur = Utilisateur(
+      idUtilisateur: Uuid().v4(), // Génération d'un UUID unique
+      nom: _nomController.text,
+      numero: _numeroController.text,
+      nomBoutique: _nomBoutiqueController.text,
+      motDePasse: _motDePasseController.text,
+      codeSecret: _codeSecretController.text,
+    );
+
+    // Enregistrer l'utilisateur dans la base de données
+    await _controller.inscrireUtilisateur(utilisateur);
+
+    // Enregistrer les informations de l'utilisateur dans SharedPreferences
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('idUtilisateur', utilisateur.idUtilisateur!);
+    await prefs.setString('nom', utilisateur.nom);
+    await prefs.setString('numero', utilisateur.numero);
+    await prefs.setString('nomBoutique', utilisateur.nomBoutique);
+
+    // Afficher un message de succès
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Inscription réussie')),
+    );
+
+    // Rediriger vers l'écran de connexion
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => ConnexionPage()),
+    );
+  } catch (e) {
+    // Afficher un message d'erreur en cas d'échec
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Erreur lors de l\'inscription : $e')),
+    );
+  } finally {
+    setState(() {
+      _isLoading = false; // Désactiver le chargement
+    });
+  }
+}
 }

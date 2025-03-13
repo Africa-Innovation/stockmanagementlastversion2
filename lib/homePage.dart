@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:stockmanagementversion2/controller/produitController.dart';
+import 'package:stockmanagementversion2/controller/venteController.dart';
 import 'package:stockmanagementversion2/model/DatabaseHelper.dart';
 import 'package:stockmanagementversion2/model/firebasesynch.dart';
 import 'package:stockmanagementversion2/views/ProfilPage.dart';
@@ -15,6 +17,7 @@ import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
 class HomePage extends StatelessWidget {
   final ProduitController _controller = ProduitController();
+  final VenteController _venteController = VenteController(); // Ajoute le VenteController
 
   Future<int> _getNombreProduitsEnAlerte() async {
     final produitsEnAlerte = await _controller.verifierAlertesStock();
@@ -22,8 +25,30 @@ class HomePage extends StatelessWidget {
   }
 
   Future<double> _getVentesDuJour() async {
-    // Implémente cette fonction pour récupérer les ventes du jour
-    return 150000.0; // Exemple de valeur
+    final prefs = await SharedPreferences.getInstance();
+    final idUtilisateur = prefs.getString('idUtilisateur');
+
+    if (idUtilisateur == null) {
+      return 0.0; // Retourne 0 si l'utilisateur n'est pas connecté
+    }
+
+    // Récupérer toutes les ventes
+    final ventes = await _venteController.obtenirHistoriqueVentes(idUtilisateur);
+
+    // Filtrer les ventes du jour
+    final ventesDuJour = ventes.where((vente) {
+      final dateVente = DateFormat('yyyy-MM-dd').format(vente.date);
+      final dateAujourdhui = DateFormat('yyyy-MM-dd').format(DateTime.now());
+      return dateVente == dateAujourdhui;
+    }).toList();
+
+    // Calculer le montant total des ventes du jour
+    final totalVentesDuJour = ventesDuJour.fold(
+      0.0,
+      (total, vente) => total + vente.montantTotal,
+    );
+
+    return totalVentesDuJour;
   }
 
   Future<void> _connectToPrinter(
@@ -116,7 +141,7 @@ class HomePage extends StatelessWidget {
           ),
           backgroundColor: Colors.blueAccent,
           elevation: 10,
-          iconTheme: IconThemeData(color: Colors.white),
+          
           actions: [
             IconButton(
               icon: Icon(Icons.person, color: Colors.white),

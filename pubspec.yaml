@@ -113,6 +113,6 @@ flutter:
 flutter_launcher_icons:
   android: true
   ios: true
-  image_path: "assets/icon.png"
+  image_path: "assets/iconforeground.png"
   adaptive_ion_background: "#ffffff"
   adaptive_ion_foreground: "assets/iconforeground.png"

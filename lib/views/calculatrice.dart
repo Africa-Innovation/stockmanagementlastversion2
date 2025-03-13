@@ -66,70 +66,85 @@ class _CalculatriceState extends State<Calculatrice> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Expanded(
-          flex: 1, // Occupe 1 partie de l'espace disponible
-          child: Container(
-            padding: EdgeInsets.all(16.0),
-            alignment: Alignment.bottomRight,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Flexible(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    reverse: true, // Fait défiler vers la droite
-                    child: Text(
-                      _operation, // Afficher l'opération en cours
-                      style: TextStyle(fontSize: 24.0, color: Colors.grey),
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Calculatrice', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.blue.shade800, // Couleur de l'AppBar
+        elevation: 8,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: Colors.white),
+          onPressed: () {
+            Navigator.pop(context); // Retour à la page précédente
+          },
+        ),
+      ),
+      body: Container(
+        color: Colors.white, // Fond blanc pour la page
+        child: Column(
+          children: [
+            Expanded(
+              flex: 1, // Occupe 1 partie de l'espace disponible
+              child: Container(
+                padding: EdgeInsets.all(16.0),
+                alignment: Alignment.bottomRight,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Flexible(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true, // Fait défiler vers la droite
+                        child: Text(
+                          _operation, // Afficher l'opération en cours
+                          style: TextStyle(fontSize: 24.0, color: Colors.grey),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                SizedBox(height: 8.0),
-                Flexible(
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    reverse: true, // Fait défiler vers la droite
-                    child: Text(
-                      _output, // Afficher le résultat actuel
-                      style: TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
+                    SizedBox(height: 8.0),
+                    Flexible(
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        reverse: true, // Fait défiler vers la droite
+                        child: Text(
+                          _output, // Afficher le résultat actuel
+                          style: TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+            Divider(height: 1.0),
+            Expanded(
+              flex: 3, // Occupe 4 parties de l'espace disponible
+              child: GridView.count(
+                crossAxisCount: 4,
+                children: [
+                  _buildButton("7"),
+                  _buildButton("8"),
+                  _buildButton("9"),
+                  _buildButton("/"),
+                  _buildButton("4"),
+                  _buildButton("5"),
+                  _buildButton("6"),
+                  _buildButton("*"),
+                  _buildButton("1"),
+                  _buildButton("2"),
+                  _buildButton("3"),
+                  _buildButton("-"),
+                  _buildButton("."),
+                  _buildButton("0"),
+                  _buildButton("C"),
+                  _buildButton("+"),
+                  _buildButton("="),
+                ],
+              ),
+            ),
+          ],
         ),
-        
-        Divider(height: 1.0),
-        Expanded(
-          flex: 3, // Occupe 4 parties de l'espace disponible
-          child: GridView.count(
-            crossAxisCount: 4,
-            children: [
-              _buildButton("7"),
-              _buildButton("8"),
-              _buildButton("9"),
-              _buildButton("/"),
-              _buildButton("4"),
-              _buildButton("5"),
-              _buildButton("6"),
-              _buildButton("*"),
-              _buildButton("1"),
-              _buildButton("2"),
-              _buildButton("3"),
-              _buildButton("-"),
-              _buildButton("."),
-              _buildButton("0"),
-              _buildButton("C"),
-              _buildButton("+"),
-              _buildButton("="),
-            ],
-          ),
-        ),
-      ],
+      ),
     );
   }
 
