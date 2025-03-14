@@ -276,6 +276,7 @@ class _InscriptionPageState extends State<InscriptionPage> {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
+                      keyboardType: TextInputType.number, // Afficher un clavier numérique
                     ),
                     SizedBox(height: 16),
                     TextField(
@@ -357,6 +358,28 @@ class _InscriptionPageState extends State<InscriptionPage> {
   }
 
   Future<void> _handleInscription() async {
+  // Vérifier que tous les champs sont remplis
+  if (_nomController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Veuillez entrer votre nom')),
+    );
+    return;
+  }
+
+  if (_numeroController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Veuillez entrer votre numéro de téléphone')),
+    );
+    return;
+  }
+
+  if (_nomBoutiqueController.text.isEmpty) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Veuillez entrer le nom de votre boutique')),
+    );
+    return;
+  }
+
   // Vérifier que le mot de passe a au moins 4 caractères
   if (_motDePasseController.text.length < 4) {
     ScaffoldMessenger.of(context).showSnackBar(

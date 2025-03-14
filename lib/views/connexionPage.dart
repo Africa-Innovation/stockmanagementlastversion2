@@ -53,6 +53,7 @@ class ConnexionPage extends StatelessWidget {
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
+                      keyboardType: TextInputType.number, // Afficher un clavier numérique
                     ),
                     SizedBox(height: 16),
                     TextField(
