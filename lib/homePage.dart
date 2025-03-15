@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -51,15 +53,35 @@ class HomePage extends StatelessWidget {
     return totalVentesDuJour;
   }
 
-  Future<void> _connectToPrinter(
-      String macAddress, BuildContext context) async {
-    try {
-      final bool isConnected =
-          await PrintBluetoothThermal.connect(macPrinterAddress: macAddress);
-      await Future.delayed(Duration(seconds: 2)); // Attendre 2 secondes
+  Future<void> _connectToPrinter(String macAddress, BuildContext context) async {
+    // Afficher un loader
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Empêche l'utilisateur de fermer le dialogue
+      builder: (context) {
+        return AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(), // Loader
+              SizedBox(height: 16),
+              Text('Connexion à l\'imprimante en cours...'),
+            ],
+          ),
+        );
+      },
+    );
 
-      final bool isStillConnected =
-          await PrintBluetoothThermal.connectionStatus;
+    try {
+      // Ajouter un timeout de 10 secondes pour la connexion
+      final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: macAddress)
+          .timeout(Duration(seconds: 10), onTimeout: () {
+        throw TimeoutException('La connexion a pris trop de temps.');
+      });
+
+      await Future.delayed(Duration(seconds: 2)); // Simuler un délai supplémentaire
+
+      final bool isStillConnected = await PrintBluetoothThermal.connectionStatus;
       if (isStillConnected) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Connecté à l\'imprimante avec succès !')),
@@ -69,15 +91,18 @@ class HomePage extends StatelessWidget {
           SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
         );
       }
+    } on TimeoutException catch (e) {
+      print("Timeout lors de la connexion : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
+      );
     } catch (e) {
       print("Erreur lors de la connexion : $e");
-      final bool isConnected = await PrintBluetoothThermal.connectionStatus;
-      if (!isConnected) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Erreur lors de la connexion à l\'imprimante.')),
-        );
-      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
+      );
+    } finally {
+      Navigator.of(context).pop(); // Fermer le loader
     }
   }
 
@@ -141,7 +166,6 @@ class HomePage extends StatelessWidget {
           ),
           backgroundColor: Colors.blueAccent,
           elevation: 10,
-          
           actions: [
             IconButton(
               icon: Icon(Icons.person, color: Colors.white),
@@ -311,10 +335,8 @@ class HomePage extends StatelessWidget {
               ),
               SizedBox(height: 10),
               GridView(
-                shrinkWrap:
-                    true, // Permet au GridView de s'adapter à la hauteur de son contenu
-                physics:
-                    NeverScrollableScrollPhysics(), // Désactive le défilement interne
+                shrinkWrap: true,
+                physics: NeverScrollableScrollPhysics(),
                 gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                   crossAxisCount: 2,
                   crossAxisSpacing: 10,
