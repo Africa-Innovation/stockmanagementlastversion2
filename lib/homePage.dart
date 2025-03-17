@@ -116,7 +116,7 @@ class HomePage extends StatelessWidget {
         return AlertDialog(
           title: Text('Sélectionnez une imprimante Bluetooth'),
           content: DropdownButton<String>(
-            hint: Text('Choisissez une imprimante'),
+            hint: Text('Choisissez une imprimante',style: TextStyle(fontSize: 14),),
             items: devices.map((BluetoothInfo device) {
               return DropdownMenuItem<String>(
                 value: device.macAdress,

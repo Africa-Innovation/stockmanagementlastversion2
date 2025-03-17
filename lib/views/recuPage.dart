@@ -141,34 +141,37 @@ class _RecuPageState extends State<RecuPage> {
 }
 
   // Sauvegarde le reçu en tant qu'image dans la galerie
-  Future<void> _saveReceiptAsImage() async {
-    try {
-      if (await Permission.storage.request().isGranted) {
-        final Uint8List? image = await screenshotController.capture();
-        if (image == null) return;
+ 
 
-        final directory = await getApplicationDocumentsDirectory();
-        final imagePath = '${directory.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png';
-        final File imageFile = File(imagePath);
-        await imageFile.writeAsBytes(image);
+Future<void> _saveReceiptAsImage() async {
+  try {
+    final Uint8List? image = await screenshotController.capture();
+    if (image == null) return;
 
-        await GallerySaver.saveImage(imageFile.path, albumName: "StockManagement");
+    final directory = await getApplicationDocumentsDirectory();
+    final imagePath = '${directory.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png';
+    final File imageFile = File(imagePath);
+    await imageFile.writeAsBytes(image);
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Permission refusée, activez l’accès au stockage.')),
-        );
-      }
-    } catch (e) {
-      print("Erreur lors de l'enregistrement du reçu : $e");
+    // Sauvegarder l'image dans la galerie avec MediaStore
+    final bool? result = await GallerySaver.saveImage(imageFile.path, albumName: "StockManagement");
+
+    if (result == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
+        SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Échec de l\'enregistrement dans la galerie.')),
       );
     }
+  } catch (e) {
+    print("Erreur lors de l'enregistrement du reçu : $e");
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
+    );
   }
+}
 
   Future<void> _selectPrinter(BuildContext context) async {
   final List<BluetoothInfo> devices = await PrintBluetoothThermal.pairedBluetooths;
@@ -178,7 +181,7 @@ class _RecuPageState extends State<RecuPage> {
       return AlertDialog(
         title: Text('Sélectionnez une imprimante Bluetooth'),
         content: DropdownButton<String>(
-          hint: Text('Choisissez une imprimante'),
+          hint: Text('Choisissez une imprimante',style: TextStyle(fontSize: 14),),
           items: devices.map((BluetoothInfo device) {
             return DropdownMenuItem<String>(
               value: device.macAdress,

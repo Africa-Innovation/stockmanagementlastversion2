@@ -222,12 +222,14 @@ Future<void> _genererPDF() async {
                   'Total des ventes :',
                   style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                 ),
-                Text(
-                  '${_totalVentes.toStringAsFixed(2)} FCFA',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
+                Flexible(
+                  child: Text(
+                    '${_totalVentes.toStringAsFixed(2)} FCFA',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                   ),
                 ),
               ],

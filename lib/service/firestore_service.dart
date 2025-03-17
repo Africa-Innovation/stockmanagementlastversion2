@@ -1,4 +1,3 @@
-// utils/permission_handler.dart
 import 'package:permission_handler/permission_handler.dart';
 
 class PermissionHandler {
@@ -14,24 +13,22 @@ class PermissionHandler {
       await Permission.location.request();
     }
 
-    // Vérifie si les permissions sont accordées
-    if (await Permission.bluetooth.isGranted && await Permission.location.isGranted) {
-      print("Permissions Bluetooth et localisation accordées.");
-    } else {
-      print("Permissions Bluetooth ou localisation refusées.");
+    // Pour Android 12 et supérieur, demander BLUETOOTH_SCAN et BLUETOOTH_CONNECT
+    if (await Permission.bluetoothScan.isDenied) {
+      await Permission.bluetoothScan.request();
     }
-  }
-
-  // Demande la permission de stockage (pour sauvegarder des fichiers)
-  static Future<void> requestStoragePermission() async {
-    if (await Permission.storage.isDenied) {
-      await Permission.storage.request();
+    if (await Permission.bluetoothConnect.isDenied) {
+      await Permission.bluetoothConnect.request();
     }
 
-    if (await Permission.storage.isGranted) {
-      print("Permission de stockage accordée.");
+    // Vérifier si les permissions sont accordées
+    if (await Permission.bluetooth.isGranted &&
+        await Permission.location.isGranted &&
+        await Permission.bluetoothScan.isGranted &&
+        await Permission.bluetoothConnect.isGranted) {
+      print("Toutes les permissions Bluetooth et de localisation sont accordées.");
     } else {
-      print("Permission de stockage refusée.");
+      print("Certaines permissions Bluetooth ou de localisation sont refusées.");
     }
   }
 }
