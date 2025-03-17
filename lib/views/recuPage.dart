@@ -10,6 +10,7 @@ import 'package:stockmanagementversion2/model/recuModel.dart';
 import 'package:flutter_esc_pos_utils/flutter_esc_pos_utils.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:stockmanagementversion2/service/firestore_service.dart';
 
 class RecuPage extends StatefulWidget {
   final Recu recu;
@@ -41,6 +42,8 @@ class _RecuPageState extends State<RecuPage> {
 
   // Imprime le reçu via Bluetooth
   Future<void> _printReceiptViaBluetooth() async {
+    // Demander les permissions Bluetooth et de localisation
+    await PermissionHandler.requestBluetoothPermissions();
   if (_selectedPrinterMac == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(

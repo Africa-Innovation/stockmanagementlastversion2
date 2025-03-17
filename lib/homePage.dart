@@ -7,6 +7,7 @@ import 'package:stockmanagementversion2/controller/produitController.dart';
 import 'package:stockmanagementversion2/controller/venteController.dart';
 import 'package:stockmanagementversion2/model/DatabaseHelper.dart';
 import 'package:stockmanagementversion2/model/firebasesynch.dart';
+import 'package:stockmanagementversion2/service/firestore_service.dart';
 import 'package:stockmanagementversion2/views/ProfilPage.dart';
 import 'package:stockmanagementversion2/views/alertStockPage.dart';
 import 'package:stockmanagementversion2/views/calculatrice.dart';
@@ -369,6 +370,8 @@ class HomePage extends StatelessWidget {
                     icon: Icons.print,
                     title: 'Configurer l\'imprimante',
                     onTap: () async {
+                      // Demander les permissions Bluetooth et de localisation
+    await PermissionHandler.requestBluetoothPermissions();
                       await _selectPrinter(context);
                     },
                   ),
