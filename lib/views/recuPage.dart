@@ -276,6 +276,8 @@ Future<void> _saveReceiptAsImage() async {
           IconButton(
           icon: Icon(Icons.settings, color: Colors.white), // Bouton de configuration
           onPressed: () async {
+            // Demander les permissions Bluetooth et de localisation
+    await PermissionHandler.requestBluetoothPermissions();
             await _selectPrinter(context); // Ouvrir la boîte de dialogue pour sélectionner l'imprimante
           },
           tooltip: 'Configurer l\'imprimante',

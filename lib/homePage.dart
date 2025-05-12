@@ -147,6 +147,7 @@ class HomePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
         appBar: AppBar(
+          automaticallyImplyLeading: false, // Désactive la flèche de retour
           title: Row(
             children: [
               Image.asset(
