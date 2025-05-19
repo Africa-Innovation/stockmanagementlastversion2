@@ -63,7 +63,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '308053571110',
     projectId: 'stocklastversion',
     storageBucket: 'stocklastversion.firebasestorage.app',
-    iosBundleId: 'com.example.stockmanagementversion2',
+    iosBundleId: 'com.yafassi.stockmanagementversion2',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
@@ -72,7 +72,7 @@ class DefaultFirebaseOptions {
     messagingSenderId: '308053571110',
     projectId: 'stocklastversion',
     storageBucket: 'stocklastversion.firebasestorage.app',
-    iosBundleId: 'com.example.stockmanagementversion2',
+    iosBundleId: 'com.yafassi.stockmanagementversion2',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
