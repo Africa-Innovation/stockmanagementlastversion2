@@ -32,33 +32,9 @@ class UtilisateurController {
   print('Utilisateur enregistré dans Firestore avec l\'ID: ${utilisateur.idUtilisateur}');
 }
 
- Future<Utilisateur?> connecterUtilisateur(
-  String numero, 
-  String motDePasse, 
-  BuildContext context,
-) async {
-  // Afficher un indicateur de chargement
-  showDialog(
-    context: context,
-    barrierDismissible: false,
-    builder: (context) {
-      return AlertDialog(
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Connexion en cours...'),
-          ],
-        ),
-      );
-    },
-  );
-
+ Future<Utilisateur?> connecterUtilisateur(String numero, String motDePasse) async {
   try {
     final firestore = FirebaseFirestore.instance;
-
-    // Rechercher l'utilisateur dans Firestore
     final querySnapshot = await firestore
         .collection('utilisateurs')
         .where('numero', isEqualTo: numero)
@@ -69,54 +45,17 @@ class UtilisateurController {
       final userDoc = querySnapshot.docs.first;
       final utilisateur = Utilisateur.fromMap(userDoc.data());
 
-      // Enregistrer les informations de l'utilisateur dans SharedPreferences
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('idUtilisateur', utilisateur.idUtilisateur!);
-      await prefs.setString('nom', utilisateur.nom);
-      await prefs.setString('numero', utilisateur.numero);
-      await prefs.setString('nomBoutique', utilisateur.nomBoutique);
-      await prefs.setString('motDePasse', utilisateur.motDePasse);
-      await prefs.setString('codeSecret', utilisateur.codeSecret);
-
-      print('Utilisateur trouvé dans Firestore: ${utilisateur.idUtilisateur}');
-
-      // Récupérer les données de Firestore et les stocker localement
+      // Insert local DB
       final dbHelper = DatabaseHelper();
       await dbHelper.insertUtilisateur(utilisateur.toMap());
 
-      // Synchroniser les données après la connexion
-      final synchronisationService = SynchronisationService();
-      await synchronisationService.synchroniserDonnees(context);
-
-      // Fermer l'indicateur de chargement
-      Navigator.of(context).pop();
-
-      // Rediriger vers la page d'accueil
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomePage()),
-      );
-
       return utilisateur;
-    } else {
-      // Fermer l'indicateur de chargement
-      Navigator.of(context).pop();
-
-      print('Aucun utilisateur trouvé avec le numéro: $numero');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Identifiants incorrects')),
-      );
-      return null;
     }
+    return null;
   } catch (e) {
-    // Fermer l'indicateur de chargement en cas d'erreur
-    Navigator.of(context).pop();
-
-    print('Erreur lors de la connexion: $e');
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Erreur lors de la connexion. Veuillez réessayer.')),
-    );
+    print('Erreur connexion: $e');
     return null;
   }
 }
+
 }

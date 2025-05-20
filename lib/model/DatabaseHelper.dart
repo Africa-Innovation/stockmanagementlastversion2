@@ -28,8 +28,24 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 1,
+      version: 2,
       onCreate: _onCreate,
+      onUpgrade: (db, oldVersion, newVersion) async {
+    if (oldVersion < 2) {
+      await db.execute('''
+        ALTER TABLE utilisateurs 
+        ADD COLUMN isTestMode INTEGER DEFAULT 1
+      ''');
+      await db.execute('''
+        ALTER TABLE utilisateurs 
+        ADD COLUMN produitsCrees INTEGER DEFAULT 0
+      ''');
+      await db.execute('''
+        ALTER TABLE utilisateurs 
+        ADD COLUMN ventesEffectuees INTEGER DEFAULT 0
+      ''');
+    }
+  },
     );
   }
 
@@ -41,9 +57,14 @@ class DatabaseHelper {
         numero TEXT,
         nomBoutique TEXT,
         motDePasse TEXT,
-        codeSecret TEXT
+        codeSecret TEXT,
+        isTestMode INTEGER DEFAULT 1,
+        produitsCrees INTEGER DEFAULT 0,
+        ventesEffectuees INTEGER DEFAULT 0
       )
     ''');
+
+    
 
     await db.execute('''
       CREATE TABLE produits(

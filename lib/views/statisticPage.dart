@@ -31,6 +31,7 @@ class _StatisticPageState extends State<StatisticPage>
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
+     _selectedDate = DateTime.now(); // 👈 Initialise avec la date du jour
     _chargerVentes();
   }
 
@@ -149,7 +150,7 @@ Future<void> _genererPDF() async {
       appBar: AppBar(
         title: Text('Statistiques des Ventes',
             style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.blueAccent,
          elevation: 8,
          iconTheme: IconThemeData(color: Colors.white),
       actions: [
@@ -275,7 +276,7 @@ Future<void> _genererPDF() async {
                 isLoading
                     ? Center(child: CircularProgressIndicator())
                     : _ventesFiltrees.isEmpty
-                        ? Center(child: Text('Aucune vente trouvée'))
+                        ? Center(child: Text('Aucune vente trouvée, sélectionnez une date'))
                         : ListView(
                             children: _ventesFiltrees.map((vente) {
                               String formattedDate =
@@ -313,7 +314,7 @@ Future<void> _genererPDF() async {
                 isLoading
                     ? Center(child: CircularProgressIndicator())
                     : _topProduits.isEmpty
-                        ? Center(child: Text('Aucun produit vendu'))
+                        ? Center(child: Text('Aucun produit vendu,sélectionnez une date'))
                         : ListView(
                             children: _topProduits.entries.take(5).map((entry) {
                               return ListTile(

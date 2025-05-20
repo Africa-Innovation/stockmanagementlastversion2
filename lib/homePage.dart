@@ -18,40 +18,63 @@ import 'package:stockmanagementversion2/views/statisticPage.dart';
 import 'package:stockmanagementversion2/views/ventePage.dart';
 import 'package:print_bluetooth_thermal/print_bluetooth_thermal.dart';
 
-class HomePage extends StatelessWidget {
-  final ProduitController _controller = ProduitController();
-  final VenteController _venteController = VenteController(); // Ajoute le VenteController
+class HomePage extends StatefulWidget {
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
 
-  Future<int> _getNombreProduitsEnAlerte() async {
-    final produitsEnAlerte = await _controller.verifierAlertesStock();
-    return produitsEnAlerte.length;
+class _HomePageState extends State<HomePage> {
+  final ProduitController _controller = ProduitController();
+
+  final VenteController _venteController = VenteController(); 
+ // Ajoute le VenteController
+  int _nombreAlertes = 0;
+
+  double _ventesDuJour = 0.0;
+
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _chargerDonnees();
+
+    // Rafraîchir toutes les 5 secondes (modifiable)
+    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+      _chargerDonnees();
+    });
   }
 
-  Future<double> _getVentesDuJour() async {
+  Future<void> _chargerDonnees() async {
+    final nombreAlertes = await _controller.verifierAlertesStock().then((list) => list.length);
+    final ventesDuJour = await _calculerVentesDuJour();
+
+    setState(() {
+      _nombreAlertes = nombreAlertes;
+      _ventesDuJour = ventesDuJour;
+    });
+  }
+
+  Future<double> _calculerVentesDuJour() async {
     final prefs = await SharedPreferences.getInstance();
     final idUtilisateur = prefs.getString('idUtilisateur');
+    if (idUtilisateur == null) return 0.0;
 
-    if (idUtilisateur == null) {
-      return 0.0; // Retourne 0 si l'utilisateur n'est pas connecté
-    }
-
-    // Récupérer toutes les ventes
     final ventes = await _venteController.obtenirHistoriqueVentes(idUtilisateur);
-
-    // Filtrer les ventes du jour
     final ventesDuJour = ventes.where((vente) {
       final dateVente = DateFormat('yyyy-MM-dd').format(vente.date);
       final dateAujourdhui = DateFormat('yyyy-MM-dd').format(DateTime.now());
       return dateVente == dateAujourdhui;
     }).toList();
 
-    // Calculer le montant total des ventes du jour
-    final totalVentesDuJour = ventesDuJour.fold(
-      0.0,
-      (total, vente) => total + vente.montantTotal,
-    );
+    final total = ventesDuJour.fold(0.0, (sum, vente) => sum + vente.montantTotal);
+    return total;
+  }
 
-    return totalVentesDuJour;
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
   }
 
   Future<void> _connectToPrinter(String macAddress, BuildContext context) async {
@@ -136,11 +159,6 @@ class HomePage extends StatelessWidget {
       await prefs.setString('printer_mac_address', selectedPrinterMac);
       await _connectToPrinter(selectedPrinterMac, context);
     }
-  }
-
-  Future<bool> _aDesProduitsEnAlerte() async {
-    final produitsEnAlerte = await _controller.verifierAlertesStock();
-    return produitsEnAlerte.isNotEmpty;
   }
 
   @override
@@ -233,61 +251,29 @@ class HomePage extends StatelessWidget {
                 style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
               SizedBox(height: 20),
-              FutureBuilder<int>(
-                future: _getNombreProduitsEnAlerte(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Erreur de chargement');
-                  } else {
-                    final nombreAlertes = snapshot.data ?? 0;
-                    return Card(
-                      elevation: 4,
-                      child: ListTile(
-                        leading: Icon(Icons.warning, color: Colors.red),
-                        title: Text('Alertes de stock'),
-                        subtitle: Text('$nombreAlertes produits en alerte'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => AlertesStockPage()),
-                          );
-                        },
-                      ),
-                    );
-                  }
+              Card(
+              elevation: 4,
+              child: ListTile(
+                leading: Icon(Icons.warning, color: Colors.red),
+                title: Text('Alertes de stock'),
+                subtitle: Text('$_nombreAlertes produits en alerte'),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => AlertesStockPage()));
                 },
               ),
-              SizedBox(height: 10),
-              FutureBuilder<double>(
-                future: _getVentesDuJour(),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return CircularProgressIndicator();
-                  } else if (snapshot.hasError) {
-                    return Text('Erreur de chargement');
-                  } else {
-                    final ventesDuJour = snapshot.data ?? 0.0;
-                    return Card(
-                      elevation: 4,
-                      child: ListTile(
-                        leading: Icon(Icons.shopping_cart, color: Colors.green),
-                        title: Text('Ventes du jour'),
-                        subtitle: Text('$ventesDuJour FCFA'),
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) => VentesPage()),
-                          );
-                        },
-                      ),
-                    );
-                  }
+            ),
+            SizedBox(height: 10),
+            Card(
+              elevation: 4,
+              child: ListTile(
+                leading: Icon(Icons.shopping_cart, color: Colors.green),
+                title: Text('Ventes du jour'),
+                subtitle: Text('${_ventesDuJour.toStringAsFixed(2)} FCFA'),
+                onTap: () {
+                  Navigator.push(context, MaterialPageRoute(builder: (_) => VentesPage()));
                 },
               ),
+            ),
               SizedBox(height: 20),
               Text(
                 'Actions rapides',

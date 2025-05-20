@@ -127,7 +127,7 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
       appBar: AppBar(
         title: Text('Historique des Ventes',
         style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.blueAccent,
         elevation: 8,
         iconTheme: IconThemeData(color: Colors.white),
         actions: [

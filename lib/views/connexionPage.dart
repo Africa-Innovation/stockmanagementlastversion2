@@ -11,27 +11,30 @@ class ConnexionPage extends StatelessWidget {
   final TextEditingController _numeroController = TextEditingController();
   final TextEditingController _motDePasseController = TextEditingController();
 
+  ConnexionPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           gradient: LinearGradient(
-            colors: [Colors.blue.shade800, Colors.blue.shade400],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+            colors: [Colors.blue.shade900, Colors.blue.shade400],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
         ),
         child: Center(
-          child: Card(
-            elevation: 8,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            margin: EdgeInsets.all(16),
-            child: Padding(
-              padding: const EdgeInsets.all(24.0),
-              child: SingleChildScrollView(
+          child: SingleChildScrollView(
+            child: Card(
+              elevation: 12,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              margin: const EdgeInsets.symmetric(horizontal: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -43,98 +46,103 @@ class ConnexionPage extends StatelessWidget {
                         color: Colors.blue.shade800,
                       ),
                     ),
-                    SizedBox(height: 24),
+                    const SizedBox(height: 24),
                     TextField(
                       controller: _numeroController,
                       decoration: InputDecoration(
                         labelText: 'Numéro de téléphone',
-                        prefixIcon: Icon(Icons.phone),
+                        prefixIcon: const Icon(Icons.phone),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      keyboardType: TextInputType.number, // Afficher un clavier numérique
+                      keyboardType: TextInputType.phone,
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextField(
                       controller: _motDePasseController,
                       obscureText: true,
                       decoration: InputDecoration(
                         labelText: 'Mot de passe',
-                        prefixIcon: Icon(Icons.lock),
+                        prefixIcon: const Icon(Icons.lock),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
                     ),
-                    SizedBox(height: 24),
-                    ElevatedButton(
+                    const SizedBox(height: 24),
+                    ElevatedButton.icon(
                       onPressed: () async {
+                        showDialog(
+                          context: context,
+                          barrierDismissible: false,
+                          builder: (_) => const AlertDialog(
+                            content: SizedBox(
+                              height: 80,
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                          ),
+                        );
+
                         final utilisateur =
                             await _controller.connecterUtilisateur(
-                          _numeroController.text,
-                          _motDePasseController.text,
-                          context,
+                          _numeroController.text.trim(),
+                          _motDePasseController.text.trim(),
                         );
+
+                        Navigator.of(context).pop(); // Ferme le loader
 
                         if (utilisateur != null) {
                           final prefs = await SharedPreferences.getInstance();
-                          final idUtilisateur = utilisateur.idUtilisateur!;
-
-                          // Enregistrer les informations de l'utilisateur dans SharedPreferences
-                          await prefs.setString('idUtilisateur', idUtilisateur);
+                          await prefs.setString(
+                              'idUtilisateur', utilisateur.idUtilisateur!);
                           await prefs.setString('nom', utilisateur.nom);
                           await prefs.setString('numero', utilisateur.numero);
                           await prefs.setString(
                               'nomBoutique', utilisateur.nomBoutique);
                           await prefs.setBool('isLoggedIn', true);
 
-                          print(
-                              'ID utilisateur enregistré dans SharedPreferences: $idUtilisateur');
+                          final sync = SynchronisationService();
+                          await sync.restaurerDonnees(context);
 
-                          // Restaurer les données depuis Firebase
-                          final synchronisationService =
-                              SynchronisationService();
-                          await synchronisationService
-                              .restaurerDonnees(context);
-
-                          // Rediriger vers la page d'accueil
                           Navigator.pushReplacement(
                             context,
-                            MaterialPageRoute(builder: (context) => HomePage()),
+                            MaterialPageRoute(builder: (_) => HomePage()),
                           );
                         } else {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Identifiants incorrects')),
+                            const SnackBar(
+                              content: Text('Identifiants incorrects'),
+                              backgroundColor: Colors.redAccent,
+                            ),
                           );
                         }
                       },
+                      icon: const Icon(Icons.login),
+                      label: const Text('Se Connecter'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.blue.shade800,
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 32, vertical: 14),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text(
-                        'Se Connecter',
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
                     ),
-                    SizedBox(height: 16),
+                    const SizedBox(height: 16),
                     TextButton(
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                              builder: (context) => InscriptionPage()),
+                          MaterialPageRoute(builder: (_) => InscriptionPage()),
                         );
                       },
                       child: Text(
                         'Créer un compte',
                         style: TextStyle(
                           color: Colors.blue.shade800,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ),

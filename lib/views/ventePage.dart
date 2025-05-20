@@ -6,6 +6,7 @@ import 'package:stockmanagementversion2/model/produitModel.dart';
 import 'package:stockmanagementversion2/model/produitvenduModel.dart';
 import 'package:stockmanagementversion2/model/recuModel.dart';
 import 'package:stockmanagementversion2/model/venteModel.dart';
+import 'package:stockmanagementversion2/service/test_mode_service.dart';
 import 'package:uuid/uuid.dart';
 import 'package:stockmanagementversion2/views/recuPage.dart'; // Importez la nouvelle page
 
@@ -115,6 +116,11 @@ class _VentesPageState extends State<VentesPage> {
   }
 
   Future<void> _validerVente() async {
+    // Vérifier les limites du mode test
+  final isLimitReached = await TestModeService.checkLimits(context);
+  if (isLimitReached) {
+    return;
+  }
     if (_produitsSelectionnes.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Veuillez sélectionner au moins un produit')),
@@ -163,6 +169,8 @@ class _VentesPageState extends State<VentesPage> {
       );
     }).toList();
 
+    
+
     final vente = Vente(
       idVente: idVente, // Utilisation de l'UUID
       date: DateTime.now(),
@@ -170,6 +178,8 @@ class _VentesPageState extends State<VentesPage> {
       montantTotal: _montantTotal,
       idUtilisateur: idUtilisateur, // Utiliser l'ID utilisateur réel
     );
+    // Ajouter ceci juste avant await _venteController.enregistrerVente(vente);
+await TestModeService.incrementVentesEffectuees();
 
     await _venteController.enregistrerVente(vente);
 
@@ -237,7 +247,7 @@ Montant total: ${vente.montantTotal} FCFA
       appBar: AppBar(
         title: Text('Ventes',
         style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.blueAccent,
         
         elevation: 8,
         iconTheme: IconThemeData(color: Colors.white), // Changer la couleur de l'icône de retour

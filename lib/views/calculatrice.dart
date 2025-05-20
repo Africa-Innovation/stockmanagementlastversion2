@@ -6,60 +6,70 @@ class Calculatrice extends StatefulWidget {
 }
 
 class _CalculatriceState extends State<Calculatrice> {
-  String _output = "0"; // Affichage actuel
-  double _num1 = 0.0; // Premier nombre
-  double _num2 = 0.0; // Deuxième nombre
-  String _operand = ""; // Opérateur (+, -, *, /)
-  String _operation = ""; // Opération en cours (ex: "5 + 3")
+  String _output = "0";
+  double _num1 = 0.0;
+  double _num2 = 0.0;
+  String _operand = "";
+  String _operation = "";
+  List<String> _history = [];
 
   void _buttonPressed(String buttonText) {
     if (buttonText == "C") {
-      // Réinitialiser la calculatrice
       setState(() {
-        _output = "0";
-        _num1 = 0.0;
-        _num2 = 0.0;
-        _operand = "";
-        _operation = ""; // Réinitialiser l'opération en cours
+        if (_output.length > 1) {
+          _output = _output.substring(0, _output.length - 1);
+        } else {
+          _output = "0";
+        }
+        _operation = "$_num1 $_operand $_output";
       });
-    } else if (buttonText == "+" || buttonText == "-" || buttonText == "*" || buttonText == "/") {
-      // Enregistrer le premier nombre et l'opérateur
+    } else if (buttonText == "AC") {
       setState(() {
-        _num1 = double.parse(_output);
+        _history.clear();
+      });
+    } else if (buttonText == "+" ||
+        buttonText == "-" ||
+        buttonText == "*" ||
+        buttonText == "/") {
+      setState(() {
+        _num1 = double.tryParse(_output) ?? 0.0;
         _operand = buttonText;
-        _operation = "$_output $buttonText"; // Afficher l'opération en cours
+        _operation = "$_output $buttonText";
         _output = "0";
       });
     } else if (buttonText == "=") {
-      // Effectuer le calcul
       setState(() {
-        _num2 = double.parse(_output);
-        if (_operand == "+") {
-          _output = (_num1 + _num2).toString();
+        _num2 = double.tryParse(_output) ?? 0.0;
+        double result = 0.0;
+        if (_operand == "+") result = _num1 + _num2;
+        if (_operand == "-") result = _num1 - _num2;
+        if (_operand == "*") result = _num1 * _num2;
+        if (_operand == "/") result = _num2 != 0 ? _num1 / _num2 : 0;
+
+        if (result == result.toInt()) {
+          _output = result
+              .toInt()
+              .toString(); // Affiche sans décimales si c’est entier
+        } else {
+          _output = result.toString(); // Sinon affiche avec décimales
         }
-        if (_operand == "-") {
-          _output = (_num1 - _num2).toString();
-        }
-        if (_operand == "*") {
-          _output = (_num1 * _num2).toString();
-        }
-        if (_operand == "/") {
-          _output = (_num1 / _num2).toString();
-        }
-        _operation = "$_num1 $_operand $_num2 = $_output"; // Afficher l'opération complète
+
+        String fullOperation = "$_num1 $_operand $_num2 = $_output";
+        _history.add(fullOperation);
+        _operation = fullOperation;
+
         _num1 = 0.0;
         _num2 = 0.0;
         _operand = "";
       });
     } else {
-      // Ajouter un chiffre ou une décimale
       setState(() {
         if (_output == "0") {
           _output = buttonText;
         } else {
           _output += buttonText;
         }
-        _operation = "$_num1 $_operand $_output"; // Mettre à jour l'opération en cours
+        _operation = "$_num1 $_operand $_output";
       });
     }
   }
@@ -69,58 +79,81 @@ class _CalculatriceState extends State<Calculatrice> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Calculatrice', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade800, // Couleur de l'AppBar
+        backgroundColor: Colors.blueAccent,
         elevation: 8,
         leading: IconButton(
           icon: Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
-            Navigator.pop(context); // Retour à la page précédente
+            Navigator.pop(context);
           },
         ),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.delete, color: Colors.white),
+            tooltip: "Vider l'historique",
+            onPressed: () {
+              setState(() {
+                _history.clear();
+              });
+            },
+          )
+        ],
       ),
       body: Container(
-        color: Colors.white, // Fond blanc pour la page
+        color: Colors.white,
         child: Column(
           children: [
-            Expanded(
-              flex: 1, // Occupe 1 partie de l'espace disponible
-              child: Container(
-                padding: EdgeInsets.all(16.0),
-                alignment: Alignment.bottomRight,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Flexible(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: true, // Fait défiler vers la droite
-                        child: Text(
-                          _operation, // Afficher l'opération en cours
-                          style: TextStyle(fontSize: 24.0, color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 8.0),
-                    Flexible(
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        reverse: true, // Fait défiler vers la droite
-                        child: Text(
-                          _output, // Afficher le résultat actuel
-                          style: TextStyle(fontSize: 48.0, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ),
-                  ],
+            // Historique
+            if (_history.isNotEmpty)
+              Container(
+                height: 100,
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: ListView.builder(
+                  reverse: true,
+                  itemCount: _history.length,
+                  itemBuilder: (context, index) {
+                    return Text(
+                      _history[_history.length - 1 - index],
+                      style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                    );
+                  },
                 ),
               ),
+            Divider(),
+            // Opération et résultat
+            Container(
+              padding: EdgeInsets.all(16),
+              alignment: Alignment.bottomRight,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Text(
+                      _operation,
+                      style: TextStyle(fontSize: 24, color: Colors.grey),
+                    ),
+                  ),
+                  SizedBox(height: 8),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    reverse: true,
+                    child: Text(
+                      _output,
+                      style:
+                          TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            Divider(height: 1.0),
+            Divider(height: 1),
+            // Boutons
             Expanded(
-              flex: 3, // Occupe 4 parties de l'espace disponible
               child: GridView.count(
                 crossAxisCount: 4,
+                padding: EdgeInsets.all(8),
                 children: [
                   _buildButton("7"),
                   _buildButton("8"),
@@ -139,6 +172,7 @@ class _CalculatriceState extends State<Calculatrice> {
                   _buildButton("C"),
                   _buildButton("+"),
                   _buildButton("="),
+                  _buildButton("AC"), // Pour vider l'historique
                 ],
               ),
             ),
@@ -150,19 +184,26 @@ class _CalculatriceState extends State<Calculatrice> {
 
   Widget _buildButton(String buttonText) {
     return Container(
-      margin: EdgeInsets.all(8.0),
+      margin: EdgeInsets.all(6.0),
       child: ElevatedButton(
         onPressed: () => _buttonPressed(buttonText),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue.shade800,
-          padding: EdgeInsets.all(24.0),
+          backgroundColor: buttonText == "="
+              ? Colors.green
+              : buttonText == "C" || buttonText == "AC"
+                  ? Colors.red
+                  : Colors.blueAccent,
+          padding: EdgeInsets.all(20.0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
         ),
-        child: Text(
-          buttonText,
-          style: TextStyle(fontSize: 24.0, color: Colors.white),
+        child: FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            buttonText,
+            style: TextStyle(fontSize: 24.0, color: Colors.white),
+          ),
         ),
       ),
     );

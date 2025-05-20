@@ -99,7 +99,7 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
       appBar: AppBar(
         title: Text('Alertes de Stock',
         style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade800,
+        backgroundColor: Colors.blueAccent,
         elevation: 8,
         iconTheme: IconThemeData(color: Colors.white),
       ),
