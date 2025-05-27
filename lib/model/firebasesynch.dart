@@ -40,11 +40,13 @@ class SynchronisationService {
       await _synchroniserVentes(idUtilisateur);
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Synchronisation terminée avec succès.')),
+        SnackBar(content: Text('Synchronisation terminée avec succès.'),
+        backgroundColor: Colors.green.shade600,),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la synchronisation : $e')),
+        SnackBar(content: Text('Erreur lors de la synchronisation : $e'),
+        backgroundColor: Colors.red.shade400,),
       );
     }
   }

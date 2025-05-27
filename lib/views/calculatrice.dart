@@ -78,18 +78,22 @@ class _CalculatriceState extends State<Calculatrice> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Calculatrice', style: TextStyle(color: Colors.white)),
+        title: const Text('Calculatrice', 
+        style: TextStyle(
+        color: Colors.white,
+        fontWeight: FontWeight.w600,)),
         backgroundColor: Colors.blueAccent,
         elevation: 8,
+        centerTitle: true,
         leading: IconButton(
-          icon: Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             Navigator.pop(context);
           },
         ),
         actions: [
           IconButton(
-            icon: Icon(Icons.delete, color: Colors.white),
+            icon: const Icon(Icons.delete, color: Colors.white),
             tooltip: "Vider l'historique",
             onPressed: () {
               setState(() {
@@ -107,7 +111,7 @@ class _CalculatriceState extends State<Calculatrice> {
             if (_history.isNotEmpty)
               Container(
                 height: 100,
-                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 child: ListView.builder(
                   reverse: true,
                   itemCount: _history.length,
@@ -119,10 +123,10 @@ class _CalculatriceState extends State<Calculatrice> {
                   },
                 ),
               ),
-            Divider(),
+            const Divider(),
             // Opération et résultat
             Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               alignment: Alignment.bottomRight,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -132,28 +136,28 @@ class _CalculatriceState extends State<Calculatrice> {
                     reverse: true,
                     child: Text(
                       _operation,
-                      style: TextStyle(fontSize: 24, color: Colors.grey),
+                      style: const TextStyle(fontSize: 24, color: Colors.grey),
                     ),
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     reverse: true,
                     child: Text(
                       _output,
                       style:
-                          TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                          const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
               ),
             ),
-            Divider(height: 1),
+            const Divider(height: 1),
             // Boutons
             Expanded(
               child: GridView.count(
                 crossAxisCount: 4,
-                padding: EdgeInsets.all(8),
+                padding: const EdgeInsets.all(8),
                 children: [
                   _buildButton("7"),
                   _buildButton("8"),
@@ -184,7 +188,7 @@ class _CalculatriceState extends State<Calculatrice> {
 
   Widget _buildButton(String buttonText) {
     return Container(
-      margin: EdgeInsets.all(6.0),
+      margin: const EdgeInsets.all(6.0),
       child: ElevatedButton(
         onPressed: () => _buttonPressed(buttonText),
         style: ElevatedButton.styleFrom(
@@ -193,7 +197,7 @@ class _CalculatriceState extends State<Calculatrice> {
               : buttonText == "C" || buttonText == "AC"
                   ? Colors.red
                   : Colors.blueAccent,
-          padding: EdgeInsets.all(20.0),
+          padding: const EdgeInsets.all(20.0),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12.0),
           ),
@@ -202,7 +206,7 @@ class _CalculatriceState extends State<Calculatrice> {
           fit: BoxFit.scaleDown,
           child: Text(
             buttonText,
-            style: TextStyle(fontSize: 24.0, color: Colors.white),
+            style: const TextStyle(fontSize: 24.0, color: Colors.white),
           ),
         ),
       ),

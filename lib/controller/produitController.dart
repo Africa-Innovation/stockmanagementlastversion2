@@ -35,7 +35,7 @@ class ProduitController {
   // Corriger le type de retour ici
   Future<List<Produit>> verifierAlertesStock() async {
   final produits = await obtenirProduits();
-  final produitsEnAlerte = produits.where((p) => p.quantite < p.stockMinimum).toList();
+  final produitsEnAlerte = produits.where((p) => p.quantite <= p.stockMinimum).toList();
   return produitsEnAlerte; // Retourne la liste des produits en alerte
 }
 }

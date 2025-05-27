@@ -47,7 +47,7 @@ class _RecuPageState extends State<RecuPage> {
   if (_selectedPrinterMac == null) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Aucune imprimante configurée. Veuillez configurer l\'imprimante.'),
+        content: const Text('Aucune imprimante configurée. Veuillez configurer l\'imprimante.'),
         action: SnackBarAction(
           label: 'Configurer',
           onPressed: () async {
@@ -69,14 +69,14 @@ class _RecuPageState extends State<RecuPage> {
     if (!isConnected) {
       // Si non connecté, tente de se connecter via l'adresse MAC
       isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: _selectedPrinterMac!)
-          .timeout(Duration(seconds: 10), onTimeout: () {
+          .timeout(const Duration(seconds: 10), onTimeout: () {
         throw TimeoutException('La connexion a pris trop de temps.');
       });
     }
 
     if (!isConnected) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Impossible de se connecter à l\'imprimante.')),
+        const SnackBar(content: Text('Impossible de se connecter à l\'imprimante.')),
       );
       return;
     }
@@ -87,10 +87,10 @@ class _RecuPageState extends State<RecuPage> {
     List<int> bytes = [];
 
     // En-tête du reçu
-    bytes += generator.text('Reçu de Vente', styles: PosStyles(align: PosAlign.center, bold: true));
-    bytes += generator.text('Boutique: ${widget.recu.nomBoutique}', styles: PosStyles(align: PosAlign.left));
-    bytes += generator.text('ID de la vente: ${widget.recu.idVente}', styles: PosStyles(align: PosAlign.left));
-    bytes += generator.text('Date: ${DateTime.now()}', styles: PosStyles(align: PosAlign.left));
+    bytes += generator.text('Reçu de Vente', styles: const PosStyles(align: PosAlign.center, bold: true));
+    bytes += generator.text('Boutique: ${widget.recu.nomBoutique}', styles: const PosStyles(align: PosAlign.left));
+    bytes += generator.text('ID de la vente: ${widget.recu.idVente}', styles: const PosStyles(align: PosAlign.left));
+    bytes += generator.text('Date: ${DateTime.now()}', styles: const PosStyles(align: PosAlign.left));
     bytes += generator.feed(1);
     bytes += generator.hr();
 
@@ -98,7 +98,7 @@ class _RecuPageState extends State<RecuPage> {
     final lines = widget.recu.contenu.split('\n');
     if (lines.length > 3) {
       for (var line in lines.sublist(3, lines.length - 1)) {
-        bytes += generator.text(line, styles: PosStyles(align: PosAlign.left));
+        bytes += generator.text(line, styles: const PosStyles(align: PosAlign.left));
         bytes += generator.feed(1);
       }
     }
@@ -106,7 +106,7 @@ class _RecuPageState extends State<RecuPage> {
     // Total
     if (lines.isNotEmpty && lines.last.contains(': ')) {
       bytes += generator.hr();
-      bytes += generator.text('Montant total: ${lines.last.split(': ')[1]}', styles: PosStyles(align: PosAlign.right, bold: true));
+      bytes += generator.text('Montant total: ${lines.last.split(': ')[1]}', styles: const PosStyles(align: PosAlign.right, bold: true));
     }
 
     bytes += generator.feed(2);
@@ -116,22 +116,22 @@ class _RecuPageState extends State<RecuPage> {
     final bool result = await PrintBluetoothThermal.writeBytes(bytes);
     if (result) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reçu imprimé avec succès ! 🖨️')),
+        const SnackBar(content: Text('Reçu imprimé avec succès ! 🖨️')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Échec de l\'impression.')),
+        const SnackBar(content: Text('Échec de l\'impression.')),
       );
     }
   } on TimeoutException catch (e) {
     print("Timeout lors de la connexion : $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
+      const SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
     );
   } catch (e) {
     print("Erreur lors de l'impression : $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Erreur lors de l\'impression.')),
+      const SnackBar(content: Text('Erreur lors de l\'impression.')),
     );
   } finally {
     setState(() {
@@ -158,17 +158,17 @@ Future<void> _saveReceiptAsImage() async {
 
     if (result == true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
+        const SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Échec de l\'enregistrement dans la galerie.')),
+        const SnackBar(content: Text('Échec de l\'enregistrement dans la galerie.')),
       );
     }
   } catch (e) {
     print("Erreur lors de l'enregistrement du reçu : $e");
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
+      const SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
     );
   }
 }
@@ -179,9 +179,9 @@ Future<void> _saveReceiptAsImage() async {
     context: context,
     builder: (context) {
       return AlertDialog(
-        title: Text('Sélectionnez une imprimante Bluetooth'),
+        title: const Text('Sélectionnez une imprimante Bluetooth'),
         content: DropdownButton<String>(
-          hint: Text('Choisissez une imprimante',style: TextStyle(fontSize: 14),),
+          hint: const Text('Choisissez une imprimante',style: TextStyle(fontSize: 14),),
           items: devices.map((BluetoothInfo device) {
             return DropdownMenuItem<String>(
               value: device.macAdress,
@@ -202,7 +202,7 @@ Future<void> _saveReceiptAsImage() async {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
+        return const AlertDialog(
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -218,7 +218,7 @@ Future<void> _saveReceiptAsImage() async {
     try {
       // Tenter de se connecter à l'imprimante sélectionnée
       final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: selectedPrinterMac)
-          .timeout(Duration(seconds: 10), onTimeout: () {
+          .timeout(const Duration(seconds: 10), onTimeout: () {
         throw TimeoutException('La connexion a pris trop de temps.');
       });
 
@@ -230,23 +230,23 @@ Future<void> _saveReceiptAsImage() async {
           _selectedPrinterMac = selectedPrinterMac;
         });
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Imprimante configurée avec succès !')),
+          const SnackBar(content: Text('Imprimante configurée avec succès !')),
         );
       } else {
         // Si la connexion échoue, afficher un message d'erreur
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
+          const SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
         );
       }
     } on TimeoutException catch (e) {
       // Gérer le timeout
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
+        const SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
       );
     } catch (e) {
       // Gérer les autres erreurs
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
+        const SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
       );
     } finally {
       // Fermer le loader
@@ -261,20 +261,24 @@ Future<void> _saveReceiptAsImage() async {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('Reçu de Vente', style: TextStyle(color: Colors.white)),
-        backgroundColor: Colors.blue.shade800,
+        title: const Text('Reçu de Vente', 
+        style: TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.w600,)),
+        backgroundColor: Colors.blueAccent,
         elevation: 8,
-        iconTheme: IconThemeData(color: Colors.white),
+        centerTitle: true,
+        iconTheme: const IconThemeData(color: Colors.white),
         actions: [
           IconButton(
-            icon: Icon(Icons.print, color: Colors.white),
+            icon: const Icon(Icons.print, color: Colors.white),
             onPressed: _isPrinting || _selectedPrinterMac == null
                 ? null
                 : _printReceiptViaBluetooth,
             tooltip: 'Imprimer via Bluetooth',
           ),
           IconButton(
-          icon: Icon(Icons.settings, color: Colors.white), // Bouton de configuration
+          icon: const Icon(Icons.settings, color: Colors.white), // Bouton de configuration
           onPressed: () async {
             // Demander les permissions Bluetooth et de localisation
     await PermissionHandler.requestBluetoothPermissions();
@@ -302,11 +306,11 @@ Future<void> _saveReceiptAsImage() async {
                           color: Colors.grey.withOpacity(0.3),
                           spreadRadius: 3,
                           blurRadius: 5,
-                          offset: Offset(0, 3),
+                          offset: const Offset(0, 3),
                         ),
                       ],
                     ),
-                    padding: EdgeInsets.all(20),
+                    padding: const EdgeInsets.all(20),
                     child: SingleChildScrollView(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -321,40 +325,40 @@ Future<void> _saveReceiptAsImage() async {
                               ),
                             ),
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                             'Boutique: ${widget.recu.nomBoutique}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
                           Text(
                             'ID de la vente: ${widget.recu.idVente}',
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 10),
-                          Divider(thickness: 1, color: Colors.black),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
+                          const Divider(thickness: 1, color: Colors.black),
+                          const SizedBox(height: 10),
                           Text(
                             'Date: ${DateTime.now()}',
-                            style: TextStyle(fontSize: 16),
+                            style: const TextStyle(fontSize: 16),
                           ),
-                          SizedBox(height: 10),
-                          Divider(thickness: 1, color: Colors.black),
-                          SizedBox(height: 10),
-                          Text(
+                          const SizedBox(height: 10),
+                          const Divider(thickness: 1, color: Colors.black),
+                          const SizedBox(height: 10),
+                          const Text(
                             'Produits vendus:',
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          SizedBox(height: 8),
+                          const SizedBox(height: 8),
                           if (lines.length > 3)
                             ...lines.sublist(3, lines.length - 1).map((line) {
                               return Column(
@@ -362,34 +366,34 @@ Future<void> _saveReceiptAsImage() async {
                                 children: [
                                   Text(
                                     line,
-                                    style: TextStyle(fontSize: 16),
+                                    style: const TextStyle(fontSize: 16),
                                   ),
-                                  SizedBox(height: 8),
+                                  const SizedBox(height: 8),
                                 ],
                               );
                             }).toList(),
-                          SizedBox(height: 10),
-                          Divider(thickness: 1, color: Colors.black),
-                          SizedBox(height: 10),
+                          const SizedBox(height: 10),
+                          const Divider(thickness: 1, color: Colors.black),
+                          const SizedBox(height: 10),
                           if (lines.isNotEmpty && lines.last.contains(': '))
                             Text(
                               'Montant total: ${lines.last.split(': ')[1]}',
-                              style: TextStyle(
+                              style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                          SizedBox(height: 20),
+                          const SizedBox(height: 20),
                         ],
                       ),
                     ),
                   ),
                 ),
-                SizedBox(height: 20),
+                const SizedBox(height: 20),
                 ElevatedButton.icon(
                   onPressed: _saveReceiptAsImage,
-                  icon: Icon(Icons.download),
-                  label: Text(
+                  icon: const Icon(Icons.download),
+                  label: const Text(
                     'Télécharger le reçu',
                     style: TextStyle(fontSize: 16),
                   ),

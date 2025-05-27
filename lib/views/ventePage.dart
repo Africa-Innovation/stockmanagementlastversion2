@@ -246,9 +246,11 @@ Montant total: ${vente.montantTotal} FCFA
     return Scaffold(
       appBar: AppBar(
         title: Text('Ventes',
-        style: TextStyle(color: Colors.white)),
+        style: TextStyle(
+          color: Colors.white,
+        fontWeight: FontWeight.w600,)),
         backgroundColor: Colors.blueAccent,
-        
+        centerTitle: true,
         elevation: 8,
         iconTheme: IconThemeData(color: Colors.white), // Changer la couleur de l'icône de retour
       ),

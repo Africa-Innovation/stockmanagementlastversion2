@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -25,22 +24,16 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage> {
   final ProduitController _controller = ProduitController();
-
-  final VenteController _venteController = VenteController(); 
- // Ajoute le VenteController
+  final VenteController _venteController = VenteController();
   int _nombreAlertes = 0;
-
   double _ventesDuJour = 0.0;
-
   Timer? _timer;
 
   @override
   void initState() {
     super.initState();
     _chargerDonnees();
-
-    // Rafraîchir toutes les 5 secondes (modifiable)
-    _timer = Timer.periodic(Duration(seconds: 5), (timer) {
+    _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
       _chargerDonnees();
     });
   }
@@ -78,77 +71,122 @@ class _HomePageState extends State<HomePage> {
   }
 
   Future<void> _connectToPrinter(String macAddress, BuildContext context) async {
-    // Afficher un loader
     showDialog(
       context: context,
-      barrierDismissible: false, // Empêche l'utilisateur de fermer le dialogue
+      barrierDismissible: false,
       builder: (context) {
-        return AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(), // Loader
-              SizedBox(height: 16),
-              Text('Connexion à l\'imprimante en cours...'),
-            ],
+        return Dialog(
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          child: Center(
+            child: Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade800)),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Connexion à l\'imprimante...',
+                    style: TextStyle(
+                      color: Colors.grey.shade800,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
           ),
         );
       },
     );
 
     try {
-      // Ajouter un timeout de 10 secondes pour la connexion
       final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: macAddress)
-          .timeout(Duration(seconds: 10), onTimeout: () {
+          .timeout(const Duration(seconds: 10), onTimeout: () {
         throw TimeoutException('La connexion a pris trop de temps.');
       });
 
-      await Future.delayed(Duration(seconds: 2)); // Simuler un délai supplémentaire
-
+      await Future.delayed(const Duration(seconds: 2));
       final bool isStillConnected = await PrintBluetoothThermal.connectionStatus;
-      if (isStillConnected) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Connecté à l\'imprimante avec succès !')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
-        );
-      }
-    } on TimeoutException catch (e) {
-      print("Timeout lors de la connexion : $e");
+      
+      Navigator.of(context).pop();
+      
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
+        SnackBar(
+          content: Text(isStillConnected 
+              ? 'Connecté à l\'imprimante avec succès !' 
+              : 'Échec de la connexion'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+          backgroundColor: isStillConnected ? Colors.green.shade600 : Colors.red.shade400,
+        ),
+      );
+    } on TimeoutException catch (e) {
+      Navigator.of(context).pop();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('La connexion a pris trop de temps'),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
     } catch (e) {
-      print("Erreur lors de la connexion : $e");
+      Navigator.of(context).pop();
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
+        SnackBar(
+          content: const Text('Erreur lors de la connexion'),
+          backgroundColor: Colors.red.shade400,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
-    } finally {
-      Navigator.of(context).pop(); // Fermer le loader
     }
   }
 
   Future<void> _selectPrinter(BuildContext context) async {
-    final List<BluetoothInfo> devices =
-        await PrintBluetoothThermal.pairedBluetooths;
+    final List<BluetoothInfo> devices = await PrintBluetoothThermal.pairedBluetooths;
     final String? selectedPrinterMac = await showDialog<String>(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Sélectionnez une imprimante Bluetooth'),
-          content: DropdownButton<String>(
-            hint: Text('Choisissez une imprimante',style: TextStyle(fontSize: 14),),
-            items: devices.map((BluetoothInfo device) {
-              return DropdownMenuItem<String>(
-                value: device.macAdress,
-                child: Text(device.name),
-              );
-            }).toList(),
-            onChanged: (String? value) {
-              Navigator.of(context).pop(value);
-            },
+          title: const Text(
+            'Sélectionnez une imprimante',
+            style: TextStyle(fontWeight: FontWeight.w600),
+          ),
+          content: Container(
+            width: double.maxFinite,
+            child: DropdownButton<String>(
+              isExpanded: true,
+              hint: const Text('Choisissez une imprimante'),
+              items: devices.map((BluetoothInfo device) {
+                return DropdownMenuItem<String>(
+                  value: device.macAdress,
+                  child: Text(
+                    device.name,
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                );
+              }).toList(),
+              onChanged: (String? value) {
+                Navigator.of(context).pop(value);
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Annuler'),
+            ),
+          ],
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
         );
       },
@@ -164,243 +202,410 @@ class _HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        appBar: AppBar(
-          automaticallyImplyLeading: false, // Désactive la flèche de retour
-          title: Row(
-            children: [
-              Image.asset(
-                'assets/icon.png',
-                width: 40,
-                height: 40,
+      backgroundColor: Colors.grey.shade50,
+      appBar: AppBar(
+        automaticallyImplyLeading: false,
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
               ),
-              SizedBox(width: 10),
-              Text(
-                'YA FASSI',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Colors.blueAccent,
-          elevation: 10,
-          actions: [
-            IconButton(
-              icon: Icon(Icons.person, color: Colors.white),
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfilPage()),
-                );
-              },
+              child: const Icon(Icons.store_rounded, size: 28),
             ),
-            IconButton(
-              icon: Icon(Icons.sync, color: Colors.white),
-              onPressed: () async {
-                showDialog(
-                  context: context,
-                  barrierDismissible: false,
-                  builder: (context) {
-                    return AlertDialog(
-                      content: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          CircularProgressIndicator(),
-                          SizedBox(height: 16),
-                          Text(
-                              'Synchronisation en cours...Ce processus utilise la connexion internet'),
-                        ],
-                      ),
-                    );
-                  },
-                );
-
-                try {
-                  final synchronisationService = SynchronisationService();
-                  await synchronisationService.synchroniserDonnees(context);
-
-                  Navigator.of(context).pop();
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content: Text('Synchronisation terminée avec succès.')),
-                  );
-                } catch (e) {
-                  Navigator.of(context).pop();
-
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                        content:
-                            Text('Erreur lors de la synchronisation : $e')),
-                  );
-                }
-              },
+            const SizedBox(width: 12),
+            const Text(
+              'YA FASSI',
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: 0.5,
+                color: Colors.white
+              ),
             ),
           ],
         ),
-        body: SingleChildScrollView(
-            child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Tableau de bord',
-                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              Card(
-              elevation: 4,
-              child: ListTile(
-                leading: Icon(Icons.warning, color: Colors.red),
-                title: Text('Alertes de stock'),
-                subtitle: Text('$_nombreAlertes produits en alerte'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => AlertesStockPage()));
-                },
-              ),
-            ),
-            SizedBox(height: 10),
-            Card(
-              elevation: 4,
-              child: ListTile(
-                leading: Icon(Icons.shopping_cart, color: Colors.green),
-                title: Text('Ventes du jour'),
-                subtitle: Text('${_ventesDuJour.toStringAsFixed(2)} FCFA'),
-                onTap: () {
-                  Navigator.push(context, MaterialPageRoute(builder: (_) => VentesPage()));
-                },
-              ),
-            ),
-              SizedBox(height: 20),
-              Text(
-                'Actions rapides',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 10),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                              builder: (context) => GestionProduitsPage()),
-                        );
-                      },
-                      icon: Icon(Icons.inventory),
-                      label: Text('Gérer les produits'),
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
+        backgroundColor: Colors.blueAccent,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.sync_rounded, size: 24),
+            onPressed: () async {
+              showDialog(
+                context: context,
+                barrierDismissible: false,
+                builder: (context) {
+                  return Dialog(
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.all(24),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.blue.shade800),
+                            ),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Synchronisation en cours...',
+                              style: TextStyle(
+                                color: Colors.grey.shade800,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
+                  );
+                },
+              );
+
+              try {
+                final synchronisationService = SynchronisationService();
+                await synchronisationService.synchroniserDonnees(context);
+                Navigator.of(context).pop();
+                // ScaffoldMessenger.of(context).showSnackBar(
+                //   SnackBar(
+                //     content: Text('Synchronisation réussie'),
+                //     behavior: SnackBarBehavior.floating,
+                //     shape: RoundedRectangleBorder(
+                //       borderRadius: BorderRadius.circular(8),
+                //     ),
+                //     backgroundColor: Colors.green.shade600,
+                //   ),
+                // );
+              } catch (e) {
+                Navigator.of(context).pop();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: const Text('Erreur lors de la synchronisation'),
+                    backgroundColor: Colors.red.shade400,
+                    behavior: SnackBarBehavior.floating,
                   ),
-                  SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => VentesPage()),
-                        );
-                      },
-                      icon: Icon(Icons.shopping_cart),
-                      label: Text('Nouvelle vente'),
-                      style: ElevatedButton.styleFrom(
-                        padding: EdgeInsets.symmetric(vertical: 16),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 20),
-              Text(
-                'Autres fonctionnalités',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 10),
-              GridView(
-                shrinkWrap: true,
-                physics: NeverScrollableScrollPhysics(),
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 10,
-                  mainAxisSpacing: 10,
-                ),
-                children: [
-                  _buildFeatureCard(
-                    icon: Icons.history,
-                    title: 'Historique des ventes',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => HistoriqueVentesPage()),
-                      );
-                    },
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.bar_chart,
-                    title: 'Statistiques',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                            builder: (context) => StatisticPage()),
-                      );
-                    },
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.print,
-                    title: 'Configurer l\'imprimante',
-                    onTap: () async {
-                      // Demander les permissions Bluetooth et de localisation
-    await PermissionHandler.requestBluetoothPermissions();
-                      await _selectPrinter(context);
-                    },
-                  ),
-                  _buildFeatureCard(
-                    icon: Icons.calculate,
-                    title: 'Calculatrice',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => Calculatrice()),
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ],
+                );
+              }
+            },
           ),
-        )));
+          IconButton(
+            icon: const Icon(Icons.person_rounded, size: 24),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => ProfilPage()),
+              );
+            },
+          ),
+        ],
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Tableau de bord',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Cartes de statut
+            Row(
+              children: [
+                Expanded(
+                  child: _buildStatusCard(
+                    icon: Icons.warning_amber_rounded,
+                    title: 'Alertes Stock',
+                    value: '$_nombreAlertes',
+                    color: Colors.red.shade400,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => AlertesStockPage()),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildStatusCard(
+                    icon: Icons.attach_money_rounded,
+                    title: 'Ventes du jour',
+                    value: '${_ventesDuJour.toStringAsFixed(2)} FCFA',
+                    color: Colors.green.shade600,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => VentesPage()),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Actions rapides
+            Text(
+              'Actions rapides',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.inventory_rounded,
+                    label: 'Gérer produits',
+                    color: Colors.blue.shade700,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => GestionProduitsPage()),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _buildActionButton(
+                    icon: Icons.shopping_cart_rounded,
+                    label: 'Nouvelle vente',
+                    color: Colors.green.shade700,
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => VentesPage()),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+
+            // Fonctionnalités
+            Text(
+              'Fonctionnalités',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
+            const SizedBox(height: 12),
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              crossAxisSpacing: 12,
+              mainAxisSpacing: 12,
+              childAspectRatio: 1.2,
+              children: [
+                _buildFeatureTile(
+                  icon: Icons.history_rounded,
+                  title: 'Historique',
+                  color: Colors.purple.shade600,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => HistoriqueVentesPage()),
+                    );
+                  },
+                ),
+                _buildFeatureTile(
+                  icon: Icons.bar_chart_rounded,
+                  title: 'Statistiques',
+                  color: Colors.orange.shade600,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => StatisticPage()),
+                    );
+                  },
+                ),
+                _buildFeatureTile(
+                  icon: Icons.print_rounded,
+                  title: 'Imprimante',
+                  color: Colors.blueGrey.shade600,
+                  onTap: () async {
+                    await _selectPrinter(context);
+                  },
+                ),
+                _buildFeatureTile(
+                  icon: Icons.calculate_rounded,
+                  title: 'Calculatrice',
+                  color: Colors.teal.shade600,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => Calculatrice()),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  Widget _buildFeatureCard({
+  Widget _buildStatusCard({
     required IconData icon,
     required String title,
+    required String value,
+    required Color color,
     required VoidCallback onTap,
   }) {
-    return Card(
-      elevation: 4,
-      child: InkWell(
-        onTap: onTap,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(icon, size: 40, color: Colors.blueAccent),
-              SizedBox(height: 10),
-              Text(
-                title,
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: color.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, size: 20, color: color),
+                ),
+                const Spacer(),
+                Icon(Icons.chevron_right_rounded, color: Colors.grey.shade400),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 14,
+                color: Colors.grey.shade600,
               ),
-            ],
+            ),
+            const SizedBox(height: 4),
+            Text(
+              value,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w700,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildActionButton({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) {
+    return ElevatedButton(
+      onPressed: onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(vertical: 16),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        elevation: 0,
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 22),
+          const SizedBox(width: 8),
+          Text(
+            label,
+            style: const TextStyle(
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+            ),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFeatureTile({
+    required IconData icon,
+    required String title,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: color.withOpacity(0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 28, color: color),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.grey.shade800,
+              ),
+            ),
+          ],
         ),
       ),
     );

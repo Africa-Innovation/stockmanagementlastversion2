@@ -48,8 +48,8 @@ static Future<Map<String, dynamic>> getCurrentState() async {
   static Future<bool> checkLimits(BuildContext context) async {
   if (await isTestMode()) {
     final ventes = await getVentesEffectuees();
-
-    if (ventes >= 5) {
+    //limite nombre de vente à 15 pour les modes testeurs
+    if (ventes >= 15) {
       _showLimitReachedDialog(context);
       return true;
     }

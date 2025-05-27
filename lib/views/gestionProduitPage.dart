@@ -352,9 +352,14 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text('Gestion des Produits', style: TextStyle(color: Colors.white)),
+            Text('Gestion des Produits', 
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+              )),
         backgroundColor: Colors.blueAccent,
         elevation: 8,
+        centerTitle: true,
         iconTheme: IconThemeData(
             color: Colors.white), // Changer la couleur de l'icône de retour
         actions: [
