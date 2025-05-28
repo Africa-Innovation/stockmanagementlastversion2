@@ -19,12 +19,18 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
   final VenteController _controller = VenteController();
   List<Vente> _ventes = [];
   List<Vente> _ventesFiltrees = [];
+  List<Vente> _paginatedVentes = [];
   String _searchQuery = '';
   double _totalVentes = 0.0;
   bool isLoading = true;
   String _filtre = 'Toutes';
   int _nombreTotalVentes = 0;
   int _nombreTotalProduitsVendus = 0;
+  
+  // Variables pour la pagination
+  final int _itemsPerPage = 10;
+  int _currentPage = 1;
+  int _totalPages = 1;
 
   @override
   void initState() {
@@ -57,6 +63,8 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
       setState(() {
         _ventes = ventes;
         _ventesFiltrees = ventes;
+        _totalPages = (_ventesFiltrees.length / _itemsPerPage).ceil();
+        _updatePaginatedVentes();
         _calculerTotalVentes();
         isLoading = false;
       });
@@ -72,6 +80,17 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
     }
   }
 
+  void _updatePaginatedVentes() {
+    final startIndex = (_currentPage - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+    setState(() {
+      _paginatedVentes = _ventesFiltrees.sublist(
+        startIndex,
+        endIndex < _ventesFiltrees.length ? endIndex : _ventesFiltrees.length,
+      );
+    });
+  }
+
   void _filtrerVentes(String query) {
     setState(() {
       _searchQuery = query;
@@ -83,6 +102,9 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
                 vente.idVente.toLowerCase().contains(query.toLowerCase()))
             .toList();
       }
+      _currentPage = 1;
+      _totalPages = (_ventesFiltrees.length / _itemsPerPage).ceil();
+      _updatePaginatedVentes();
       _calculerTotalVentes();
     });
   }
@@ -106,6 +128,9 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
             .toList();
       }
 
+      _currentPage = 1;
+      _totalPages = (_ventesFiltrees.length / _itemsPerPage).ceil();
+      _updatePaginatedVentes();
       _calculerTotalVentes();
     });
   }
@@ -127,6 +152,52 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
       fileName: "historique_ventes",
       nombreTotalVentes: _nombreTotalVentes,
       nombreTotalProduitsVendus: _nombreTotalProduitsVendus,
+    );
+  }
+
+  Widget _buildPaginationControls() {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: Icon(Icons.chevron_left, color: Colors.blue.shade800),
+            onPressed: _currentPage > 1
+                ? () {
+                    setState(() {
+                      _currentPage--;
+                      _updatePaginatedVentes();
+                    });
+                  }
+                : null,
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Page $_currentPage/$_totalPages',
+              style: TextStyle(
+                color: Colors.blue.shade800,
+                fontWeight: FontWeight.w500),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.chevron_right, color: Colors.blue.shade800),
+            onPressed: _currentPage < _totalPages
+                ? () {
+                    setState(() {
+                      _currentPage++;
+                      _updatePaginatedVentes();
+                    });
+                  }
+                : null,
+          ),
+        ],
+      ),
     );
   }
 
@@ -252,7 +323,7 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
           ),
           const SizedBox(height: 8),
 
-          // Liste des ventes
+          // Liste des ventes avec pagination
           Expanded(
             child: isLoading
                 ? Center(
@@ -288,142 +359,149 @@ class _HistoriqueVentesPageState extends State<HistoriqueVentesPage> {
                           ],
                         ),
                       )
-                    : ListView.separated(
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _ventesFiltrees.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(height: 12),
-                        itemBuilder: (context, index) {
-                          final vente = _ventesFiltrees[index];
-                          final formattedDate =
-                              DateFormat('dd/MM/yyyy HH:mm').format(vente.date);
-                          return InkWell(
-                            onTap: () {
-                              Navigator.of(context).push(
-                                MaterialPageRoute(
-                                  builder: (context) =>
-                                      DetailsVentePage(vente: vente),
-                                ),
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(12),
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(12),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Padding(
-                                padding: const EdgeInsets.all(16),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Wrap(
-                                      spacing: 8,
-                                      runSpacing: 4,
-                                      children: [
-                                        Text(
-                                          'Vente #${vente.idVente}',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.blue.shade800,
-                                          ),
-                                        ),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                              horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.green.shade50,
-                                            borderRadius:
-                                                BorderRadius.circular(12),
-                                          ),
-                                          child: Text(
-                                            '${vente.montantTotal.toStringAsFixed(2)} FCFA',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight: FontWeight.w600,
-                                              color: Colors.green.shade800,
-                                            ),
-                                          ),
+                    : Column(
+                        children: [
+                          Expanded(
+                            child: ListView.separated(
+                              padding: const EdgeInsets.all(16),
+                              itemCount: _paginatedVentes.length,
+                              separatorBuilder: (context, index) =>
+                                  const SizedBox(height: 12),
+                              itemBuilder: (context, index) {
+                                final vente = _paginatedVentes[index];
+                                final formattedDate =
+                                    DateFormat('dd/MM/yyyy HH:mm').format(vente.date);
+                                return InkWell(
+                                  onTap: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            DetailsVentePage(vente: vente),
+                                      ),
+                                    );
+                                  },
+                                  borderRadius: BorderRadius.circular(12),
+                                  child: Container(
+                                    decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.05),
+                                          blurRadius: 8,
+                                          offset: const Offset(0, 4),
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      formattedDate,
-                                      style: TextStyle(
-                                        fontSize: 13,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 12),
-                                    ...vente.produitsVendus
-                                        .take(2)
-                                        .map((produit) => Padding(
-                                              padding:
-                                                  const EdgeInsets.only(bottom: 4),
-                                              child: Row(
-                                                children: [
-                                                  Expanded(
-                                                    child: Text(
-                                                      '- ${produit.nom}',
-                                                      style: const TextStyle(
-                                                          fontSize: 14),
-                                                    ),
-                                                  ),
-                                                  Text(
-                                                    'x${produit.quantiteVendue}',
-                                                    style: TextStyle(
-                                                      fontSize: 14,
-                                                      color:
-                                                          Colors.grey.shade600,
-                                                    ),
-                                                  ),
-                                                  const SizedBox(width: 16),
-                                                  Text(
-                                                    '${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA',
-                                                    style: const TextStyle(
-                                                      fontSize: 14,
-                                                      fontWeight:
-                                                          FontWeight.w500,
-                                                    ),
-                                                  ),
-                                                ],
+                                    child: Padding(
+                                      padding: const EdgeInsets.all(16),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Wrap(
+                                            spacing: 8,
+                                            runSpacing: 4,
+                                            children: [
+                                              Text(
+                                                'Vente #${vente.idVente}',
+                                                style: TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Colors.blue.shade800,
+                                                ),
                                               ),
-                                            ))
-                                        .toList(),
-                                    if (vente.produitsVendus.length > 2) ...[
-                                      const SizedBox(height: 4),
-                                      Text(
-                                        '+ ${vente.produitsVendus.length - 2} autres produits',
-                                        style: TextStyle(
-                                          fontSize: 13,
-                                          color: Colors.blue.shade600,
-                                          fontStyle: FontStyle.italic,
-                                        ),
-                                      ),
-                                    ],
-                                    const SizedBox(height: 8),
-                                    Align(
-                                      alignment: Alignment.centerRight,
-                                      child: Icon(
-                                        Icons.chevron_right_rounded,
-                                        color: Colors.blue.shade800,
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(
+                                                    horizontal: 8, vertical: 4),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.green.shade50,
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                ),
+                                                child: Text(
+                                                  '${vente.montantTotal.toStringAsFixed(2)} FCFA',
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight: FontWeight.w600,
+                                                    color: Colors.green.shade800,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Text(
+                                            formattedDate,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              color: Colors.grey.shade600,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          ...vente.produitsVendus
+                                              .take(2)
+                                              .map((produit) => Padding(
+                                                    padding:
+                                                        const EdgeInsets.only(bottom: 4),
+                                                    child: Row(
+                                                      children: [
+                                                        Expanded(
+                                                          child: Text(
+                                                            '- ${produit.nom}',
+                                                            style: const TextStyle(
+                                                                fontSize: 14),
+                                                          ),
+                                                        ),
+                                                        Text(
+                                                          'x${produit.quantiteVendue}',
+                                                          style: TextStyle(
+                                                            fontSize: 14,
+                                                            color:
+                                                                Colors.grey.shade600,
+                                                          ),
+                                                        ),
+                                                        const SizedBox(width: 16),
+                                                        Text(
+                                                          '${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA',
+                                                          style: const TextStyle(
+                                                            fontSize: 14,
+                                                            fontWeight:
+                                                                FontWeight.w500,
+                                                          ),
+                                                        ),
+                                                      ],
+                                                    ),
+                                                  ))
+                                              .toList(),
+                                          if (vente.produitsVendus.length > 2) ...[
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '+ ${vente.produitsVendus.length - 2} autres produits',
+                                              style: TextStyle(
+                                                fontSize: 13,
+                                                color: Colors.blue.shade600,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            ),
+                                          ],
+                                          const SizedBox(height: 8),
+                                          Align(
+                                            alignment: Alignment.centerRight,
+                                            child: Icon(
+                                              Icons.chevron_right_rounded,
+                                              color: Colors.blue.shade800,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
-                                  ],
-                                ),
-                              ),
+                                  ),
+                                );
+                              },
                             ),
-                          );
-                        },
+                          ),
+                          _buildPaginationControls(),
+                        ],
                       ),
           ),
         ],

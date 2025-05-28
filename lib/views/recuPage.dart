@@ -40,220 +40,264 @@ class _RecuPageState extends State<RecuPage> {
     });
   }
 
+  String formatIdVente(String id) {
+    if (id.length <= 12) return id; // Pas besoin de tronquer
+    return '${id.substring(0, 6)}...${id.substring(id.length - 6)}';
+  }
+
   // Imprime le reçu via Bluetooth
   Future<void> _printReceiptViaBluetooth() async {
     // Demander les permissions Bluetooth et de localisation
     await PermissionHandler.requestBluetoothPermissions();
-  if (_selectedPrinterMac == null) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text('Aucune imprimante configurée. Veuillez configurer l\'imprimante.'),
-        action: SnackBarAction(
-          label: 'Configurer',
-          onPressed: () async {
-            await _selectPrinter(context); // Ouvrir la boîte de dialogue pour configurer l'imprimante
-          },
-        ),
-      ),
-    );
-    return;
-  }
-
-  setState(() {
-    _isPrinting = true;
-  });
-
-  try {
-    // Vérifie l'état de la connexion
-    bool isConnected = await PrintBluetoothThermal.connectionStatus;
-    if (!isConnected) {
-      // Si non connecté, tente de se connecter via l'adresse MAC
-      isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: _selectedPrinterMac!)
-          .timeout(const Duration(seconds: 10), onTimeout: () {
-        throw TimeoutException('La connexion a pris trop de temps.');
-      });
-    }
-
-    if (!isConnected) {
+    if (_selectedPrinterMac == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Impossible de se connecter à l\'imprimante.')),
+        SnackBar(
+          content: const Text(
+              'Aucune imprimante configurée. Veuillez configurer l\'imprimante.'),
+          action: SnackBarAction(
+            label: 'Configurer',
+            onPressed: () async {
+              await _selectPrinter(
+                  context); // Ouvrir la boîte de dialogue pour configurer l'imprimante
+            },
+          ),
+        ),
       );
       return;
     }
 
-    // Génère le ticket d'impression en texte brut
-    final profile = await CapabilityProfile.load();
-    final generator = Generator(PaperSize.mm58, profile);
-    List<int> bytes = [];
-
-    // En-tête du reçu
-    bytes += generator.text('Reçu de Vente', styles: const PosStyles(align: PosAlign.center, bold: true));
-    bytes += generator.text('Boutique: ${widget.recu.nomBoutique}', styles: const PosStyles(align: PosAlign.left));
-    bytes += generator.text('ID de la vente: ${widget.recu.idVente}', styles: const PosStyles(align: PosAlign.left));
-    bytes += generator.text('Date: ${DateTime.now()}', styles: const PosStyles(align: PosAlign.left));
-    bytes += generator.feed(1);
-    bytes += generator.hr();
-
-    // Détails des produits
-    final lines = widget.recu.contenu.split('\n');
-    if (lines.length > 3) {
-      for (var line in lines.sublist(3, lines.length - 1)) {
-        bytes += generator.text(line, styles: const PosStyles(align: PosAlign.left));
-        bytes += generator.feed(1);
-      }
-    }
-
-    // Total
-    if (lines.isNotEmpty && lines.last.contains(': ')) {
-      bytes += generator.hr();
-      bytes += generator.text('Montant total: ${lines.last.split(': ')[1]}', styles: const PosStyles(align: PosAlign.right, bold: true));
-    }
-
-    bytes += generator.feed(2);
-    bytes += generator.cut();
-
-    // Envoie le ticket à l'imprimante
-    final bool result = await PrintBluetoothThermal.writeBytes(bytes);
-    if (result) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reçu imprimé avec succès ! 🖨️')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Échec de l\'impression.')),
-      );
-    }
-  } on TimeoutException catch (e) {
-    print("Timeout lors de la connexion : $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
-    );
-  } catch (e) {
-    print("Erreur lors de l'impression : $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Erreur lors de l\'impression.')),
-    );
-  } finally {
     setState(() {
-      _isPrinting = false;
+      _isPrinting = true;
     });
+
+    try {
+      // Vérifie l'état de la connexion
+      bool isConnected = await PrintBluetoothThermal.connectionStatus;
+      if (!isConnected) {
+        // Si non connecté, tente de se connecter via l'adresse MAC
+        isConnected = await PrintBluetoothThermal.connect(
+                macPrinterAddress: _selectedPrinterMac!)
+            .timeout(const Duration(seconds: 10), onTimeout: () {
+          throw TimeoutException('La connexion a pris trop de temps.');
+        });
+      }
+
+      if (!isConnected) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+              content: const Text('Impossible de se connecter à l\'imprimante.'),
+              backgroundColor: Colors.red.shade400,),
+        );
+        return;
+      }
+
+      // Génère le ticket d'impression en texte brut
+      final profile = await CapabilityProfile.load();
+      final generator = Generator(PaperSize.mm58, profile);
+      List<int> bytes = [];
+
+      // En-tête du reçu
+      bytes += generator.text('Reçu de Vente',
+          styles: const PosStyles(align: PosAlign.center, bold: true));
+      bytes += generator.text('Boutique: ${widget.recu.nomBoutique}',
+          styles: const PosStyles(align: PosAlign.left));
+      bytes += generator.text(
+          'ID de la vente: ${formatIdVente(widget.recu.idVente)}',
+          styles: const PosStyles(align: PosAlign.left));
+      bytes += generator.text('Date: ${DateTime.now()}',
+          styles: const PosStyles(align: PosAlign.left));
+      bytes += generator.feed(1);
+      bytes += generator.hr();
+
+      // Détails des produits
+      final lines = widget.recu.contenu.split('\n');
+      if (lines.length > 3) {
+        for (var line in lines.sublist(3, lines.length - 1)) {
+          bytes += generator.text(line,
+              styles: const PosStyles(align: PosAlign.left));
+          bytes += generator.feed(1);
+        }
+      }
+
+      // Total
+      if (lines.isNotEmpty && lines.last.contains(': ')) {
+        bytes += generator.hr();
+        bytes += generator.text('Montant total: ${lines.last.split(': ')[1]}',
+            styles: const PosStyles(align: PosAlign.right, bold: true));
+      }
+
+      bytes += generator.feed(2);
+      bytes += generator.cut();
+
+      // Envoie le ticket à l'imprimante
+      final bool result = await PrintBluetoothThermal.writeBytes(bytes);
+      if (result) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: const Text('Reçu imprimé avec succès ! 🖨️'),
+          backgroundColor: Colors.green.shade600,),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: const Text('Échec de l\'impression.'),
+          backgroundColor: Colors.red.shade400,),
+        );
+      }
+    } on TimeoutException catch (e) {
+      print("Timeout lors de la connexion : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+         SnackBar(
+            content:
+                const Text('La connexion a pris trop de temps. Veuillez réessayer.'),
+                backgroundColor: Colors.red.shade400,),
+      );
+    } catch (e) {
+      print("Erreur lors de l'impression : $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: const Text('Erreur lors de l\'impression.'),
+        backgroundColor: Colors.red.shade400,),
+      );
+    } finally {
+      setState(() {
+        _isPrinting = false;
+      });
+    }
   }
-}
 
   // Sauvegarde le reçu en tant qu'image dans la galerie
- 
 
-Future<void> _saveReceiptAsImage() async {
-  try {
-    final Uint8List? image = await screenshotController.capture();
-    if (image == null) return;
+  Future<void> _saveReceiptAsImage() async {
+    try {
+      final Uint8List? image = await screenshotController.capture();
+      if (image == null) return;
 
-    final directory = await getApplicationDocumentsDirectory();
-    final imagePath = '${directory.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png';
-    final File imageFile = File(imagePath);
-    await imageFile.writeAsBytes(image);
+      final directory = await getApplicationDocumentsDirectory();
+      final imagePath =
+          '${directory.path}/receipt_${DateTime.now().millisecondsSinceEpoch}.png';
+      final File imageFile = File(imagePath);
+      await imageFile.writeAsBytes(image);
 
-    // Sauvegarder l'image dans la galerie avec MediaStore
-    final bool? result = await GallerySaver.saveImage(imageFile.path, albumName: "StockManagement");
+      // Sauvegarder l'image dans la galerie avec MediaStore
+      final bool? result = await GallerySaver.saveImage(imageFile.path,
+          albumName: "StockManagement");
 
-    if (result == true) {
+      if (result == true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(content: const Text('Reçu enregistré dans la galerie ! 📸'),
+          backgroundColor: Colors.green.shade600,),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+           SnackBar(
+              content: const Text('Échec de l\'enregistrement dans la galerie.'),
+              backgroundColor: Colors.red.shade400,),
+        );
+      }
+    } catch (e) {
+      print("Erreur lors de l'enregistrement du reçu : $e");
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Reçu enregistré dans la galerie ! 📸')),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Échec de l\'enregistrement dans la galerie.')),
+         SnackBar(
+            content: const Text('Erreur lors de l\'enregistrement du reçu.'),
+            backgroundColor: Colors.red.shade400,),
       );
     }
-  } catch (e) {
-    print("Erreur lors de l'enregistrement du reçu : $e");
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Erreur lors de l\'enregistrement du reçu.')),
-    );
   }
-}
 
   Future<void> _selectPrinter(BuildContext context) async {
-  final List<BluetoothInfo> devices = await PrintBluetoothThermal.pairedBluetooths;
-  final String? selectedPrinterMac = await showDialog<String>(
-    context: context,
-    builder: (context) {
-      return AlertDialog(
-        title: const Text('Sélectionnez une imprimante Bluetooth'),
-        content: DropdownButton<String>(
-          hint: const Text('Choisissez une imprimante',style: TextStyle(fontSize: 14),),
-          items: devices.map((BluetoothInfo device) {
-            return DropdownMenuItem<String>(
-              value: device.macAdress,
-              child: Text(device.name),
-            );
-          }).toList(),
-          onChanged: (String? value) {
-            Navigator.of(context).pop(value);
-          },
-        ),
-      );
-    },
-  );
-
-  if (selectedPrinterMac != null) {
-    // Afficher un loader pendant la tentative de connexion
-    showDialog(
+    final List<BluetoothInfo> devices =
+        await PrintBluetoothThermal.pairedBluetooths;
+    final String? selectedPrinterMac = await showDialog<String>(
       context: context,
-      barrierDismissible: false,
       builder: (context) {
-        return const AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(height: 16),
-              Text('Connexion à l\'imprimante en cours...'),
-            ],
+        return AlertDialog(
+          title: const Text('Sélectionnez une imprimante Bluetooth'),
+          content: DropdownButton<String>(
+            hint: const Text(
+              'Choisissez une imprimante',
+              style: TextStyle(fontSize: 14),
+            ),
+            items: devices.map((BluetoothInfo device) {
+              return DropdownMenuItem<String>(
+                value: device.macAdress,
+                child: Text(device.name),
+              );
+            }).toList(),
+            onChanged: (String? value) {
+              Navigator.of(context).pop(value);
+            },
           ),
         );
       },
     );
 
-    try {
-      // Tenter de se connecter à l'imprimante sélectionnée
-      final bool isConnected = await PrintBluetoothThermal.connect(macPrinterAddress: selectedPrinterMac)
-          .timeout(const Duration(seconds: 10), onTimeout: () {
-        throw TimeoutException('La connexion a pris trop de temps.');
-      });
+    if (selectedPrinterMac != null) {
+      // Afficher un loader pendant la tentative de connexion
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) {
+          return const AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(height: 16),
+                Text('Connexion à l\'imprimante en cours...'),
+              ],
+            ),
+          );
+        },
+      );
 
-      if (isConnected) {
-        // Si la connexion réussit, stocker l'adresse MAC et afficher un message de succès
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('printer_mac_address', selectedPrinterMac);
-        setState(() {
-          _selectedPrinterMac = selectedPrinterMac;
+      try {
+        // Tenter de se connecter à l'imprimante sélectionnée
+        final bool isConnected = await PrintBluetoothThermal.connect(
+                macPrinterAddress: selectedPrinterMac)
+            .timeout(const Duration(seconds: 10), onTimeout: () {
+          throw TimeoutException('La connexion a pris trop de temps.');
         });
+
+        if (isConnected) {
+          // Si la connexion réussit, stocker l'adresse MAC et afficher un message de succès
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('printer_mac_address', selectedPrinterMac);
+          setState(() {
+            _selectedPrinterMac = selectedPrinterMac;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+                content: const Text('Imprimante configurée avec succès !',
+                ),
+                backgroundColor: Colors.green.shade600,),
+          );
+        } else {
+          // Si la connexion échoue, afficher un message d'erreur
+          ScaffoldMessenger.of(context).showSnackBar(
+             SnackBar(
+                content: const Text('Échec de la connexion à l\'imprimante.'),
+                backgroundColor: Colors.red.shade400,),
+          );
+        }
+      } on TimeoutException catch (e) {
+        // Gérer le timeout
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Imprimante configurée avec succès !')),
+           SnackBar(
+              content: const Text(
+                  'La connexion a pris trop de temps. Veuillez réessayer.'),
+                  backgroundColor: Colors.red.shade400,),
         );
-      } else {
-        // Si la connexion échoue, afficher un message d'erreur
+      } catch (e) {
+        // Gérer les autres erreurs
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Échec de la connexion à l\'imprimante.')),
+           SnackBar(
+              content: const Text('Erreur lors de la connexion à l\'imprimante.'),
+              backgroundColor: Colors.red.shade400,),
         );
+      } finally {
+        // Fermer le loader
+        Navigator.of(context).pop();
       }
-    } on TimeoutException catch (e) {
-      // Gérer le timeout
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('La connexion a pris trop de temps. Veuillez réessayer.')),
-      );
-    } catch (e) {
-      // Gérer les autres erreurs
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Erreur lors de la connexion à l\'imprimante.')),
-      );
-    } finally {
-      // Fermer le loader
-      Navigator.of(context).pop();
     }
   }
-}
 
   @override
   Widget build(BuildContext context) {
@@ -261,10 +305,11 @@ Future<void> _saveReceiptAsImage() async {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Reçu de Vente', 
-        style: TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,)),
+        title: const Text('Reçu de Vente',
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            )),
         backgroundColor: Colors.blueAccent,
         elevation: 8,
         centerTitle: true,
@@ -278,14 +323,16 @@ Future<void> _saveReceiptAsImage() async {
             tooltip: 'Imprimer via Bluetooth',
           ),
           IconButton(
-          icon: const Icon(Icons.settings, color: Colors.white), // Bouton de configuration
-          onPressed: () async {
-            // Demander les permissions Bluetooth et de localisation
-    await PermissionHandler.requestBluetoothPermissions();
-            await _selectPrinter(context); // Ouvrir la boîte de dialogue pour sélectionner l'imprimante
-          },
-          tooltip: 'Configurer l\'imprimante',
-        ),
+            icon: const Icon(Icons.settings,
+                color: Colors.white), // Bouton de configuration
+            onPressed: () async {
+              // Demander les permissions Bluetooth et de localisation
+              await PermissionHandler.requestBluetoothPermissions();
+              await _selectPrinter(
+                  context); // Ouvrir la boîte de dialogue pour sélectionner l'imprimante
+            },
+            tooltip: 'Configurer l\'imprimante',
+          ),
         ],
       ),
       body: Center(
@@ -335,7 +382,7 @@ Future<void> _saveReceiptAsImage() async {
                           ),
                           const SizedBox(height: 10),
                           Text(
-                            'ID de la vente: ${widget.recu.idVente}',
+                            'ID de la vente: ${formatIdVente(widget.recu.idVente)}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,

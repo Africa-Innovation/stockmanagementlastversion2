@@ -17,12 +17,21 @@ class _StatisticPageState extends State<StatisticPage>
   DateTime? _selectedDate;
   String _selectedPeriod = 'Jour';
   List<Vente> _ventesFiltrees = [];
+  List<Vente> _paginatedVentes = [];
   double _totalVentes = 0.0;
   Map<String, int> _topProduits = {};
+  Map<String, int> _paginatedTopProduits = {};
   bool isLoading = true;
   late TabController _tabController;
   int _nombreTotalVentes = 0;
   int _nombreTotalProduitsVendus = 0;
+  
+  // Variables pour la pagination
+  final int _itemsPerPage = 10;
+  int _currentPageVentes = 1;
+  int _totalPagesVentes = 1;
+  int _currentPageProduits = 1;
+  int _totalPagesProduits = 1;
 
   @override
   void initState() {
@@ -88,6 +97,30 @@ class _StatisticPageState extends State<StatisticPage>
     }
   }
 
+  void _updatePaginatedVentes() {
+    final startIndex = (_currentPageVentes - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+    setState(() {
+      _paginatedVentes = _ventesFiltrees.sublist(
+        startIndex,
+        endIndex < _ventesFiltrees.length ? endIndex : _ventesFiltrees.length,
+      );
+    });
+  }
+
+  void _updatePaginatedTopProduits() {
+    final startIndex = (_currentPageProduits - 1) * _itemsPerPage;
+    final endIndex = startIndex + _itemsPerPage;
+    setState(() {
+      _paginatedTopProduits = Map.fromEntries(
+        _topProduits.entries.toList().sublist(
+          startIndex,
+          endIndex < _topProduits.length ? endIndex : _topProduits.length,
+        ),
+      );
+    });
+  }
+
   void _filtrerVentes() {
     if (_selectedDate == null) return;
 
@@ -135,7 +168,76 @@ class _StatisticPageState extends State<StatisticPage>
         _topProduits.entries.toList()
           ..sort((a, b) => b.value.compareTo(a.value)),
       );
+
+      // Mettre à jour la pagination
+      _currentPageVentes = 1;
+      _currentPageProduits = 1;
+      _totalPagesVentes = (_ventesFiltrees.length / _itemsPerPage).ceil();
+      _totalPagesProduits = (_topProduits.length / _itemsPerPage).ceil();
+      _updatePaginatedVentes();
+      _updatePaginatedTopProduits();
     });
+  }
+
+  Widget _buildPaginationControls(bool isVentesTab) {
+    final currentPage = isVentesTab ? _currentPageVentes : _currentPageProduits;
+    final totalPages = isVentesTab ? _totalPagesVentes : _totalPagesProduits;
+    final Function(bool) onPageChanged = isVentesTab 
+        ? (forward) {
+            setState(() {
+              if (forward) {
+                _currentPageVentes++;
+              } else {
+                _currentPageVentes--;
+              }
+              _updatePaginatedVentes();
+            });
+          }
+        : (forward) {
+            setState(() {
+              if (forward) {
+                _currentPageProduits++;
+              } else {
+                _currentPageProduits--;
+              }
+              _updatePaginatedTopProduits();
+            });
+          };
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          IconButton(
+            icon: Icon(Icons.chevron_left, color: Colors.blue.shade800),
+            onPressed: currentPage > 1
+                ? () => onPageChanged(false)
+                : null,
+          ),
+          Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Colors.blue.shade50,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              'Page $currentPage/$totalPages',
+              style: TextStyle(
+                color: Colors.blue.shade800,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          IconButton(
+            icon: Icon(Icons.chevron_right, color: Colors.blue.shade800),
+            onPressed: currentPage < totalPages
+                ? () => onPageChanged(true)
+                : null,
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -181,9 +283,7 @@ class _StatisticPageState extends State<StatisticPage>
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.w600,
-            
             color: Colors.white,
-            
           ),
         ),
         backgroundColor: Colors.blueAccent,
@@ -363,219 +463,233 @@ class _StatisticPageState extends State<StatisticPage>
               controller: _tabController,
               children: [
                 // Onglet Ventes
-                isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.blue.shade800),
-                        ),
-                      )
-                    : _ventesFiltrees.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.receipt_long_rounded,
-                                    size: 48, color: Colors.grey.shade400),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Aucune vente trouvée',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                Text(
-                                  'Sélectionnez une autre période',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _ventesFiltrees.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final vente = _ventesFiltrees[index];
-                              final formattedDate = DateFormat('dd/MM/yyyy HH:mm')
-                                  .format(vente.date);
-                              return Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: Colors.grey.shade200,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: ExpansionTile(
-                                  leading: Icon(Icons.receipt_rounded,
-                                      color: Colors.blue.shade800),
-                                  title: Text(
-                                    'Vente #${vente.idVente}',
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  subtitle: Text(
-                                    formattedDate,
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                  trailing: Text(
-                                    '${vente.montantTotal.toStringAsFixed(2)} FCFA',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.green.shade600,
-                                    ),
-                                  ),
-                                  children: [
-                                    Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 16, vertical: 8),
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: vente.produitsVendus
-                                            .map((produit) => Padding(
-                                                  padding:
-                                                      const EdgeInsets.only(bottom: 8),
-                                                  child: Row(
-                                                    children: [
-                                                      Expanded(
-                                                        child: Text(
-                                                          '- ${produit.nom}',
-                                                          style: const TextStyle(
-                                                              fontSize: 14),
-                                                        ),
-                                                      ),
-                                                      Text(
-                                                        'x${produit.quantiteVendue}',
-                                                        style: TextStyle(
-                                                          fontSize: 14,
-                                                          color: Colors
-                                                              .grey.shade600,
-                                                        ),
-                                                      ),
-                                                      const SizedBox(width: 16),
-                                                      Text(
-                                                        '${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA',
-                                                        style: const TextStyle(
-                                                          fontSize: 14,
-                                                          fontWeight:
-                                                              FontWeight.w500,
-                                                        ),
-                                                      ),
-                                                    ],
-                                                  ),
-                                                ))
-                                            .toList(),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                            },
-                          ),
-
-                // Onglet Top Produits
-                isLoading
-                    ? Center(
-                        child: CircularProgressIndicator(
-                          valueColor: AlwaysStoppedAnimation<Color>(
-                              Colors.blue.shade800),
-                        ),
-                      )
-                    : _topProduits.isEmpty
-                        ? Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(Icons.shopping_bag_rounded,
-                                    size: 48, color: Colors.grey.shade400),
-                                const SizedBox(height: 16),
-                                Text(
-                                  'Aucun produit vendu',
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.grey.shade600,
-                                  ),
-                                ),
-                                Text(
-                                  'Sélectionnez une autre période',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey.shade500,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          )
-                        : ListView.separated(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: _topProduits.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(height: 8),
-                            itemBuilder: (context, index) {
-                              final entry = _topProduits.entries.elementAt(index);
-                              return Card(
-                                elevation: 0,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(12),
-                                  side: BorderSide(
-                                    color: Colors.grey.shade200,
-                                    width: 1,
-                                  ),
-                                ),
-                                child: ListTile(
-                                  leading: Container(
-                                    width: 40,
-                                    height: 40,
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Center(
-                                      child: Text(
-                                        '${index + 1}',
+                Column(
+                  children: [
+                    Expanded(
+                      child: isLoading
+                          ? Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.blue.shade800),
+                              ),
+                            )
+                          : _ventesFiltrees.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.receipt_long_rounded,
+                                          size: 48, color: Colors.grey.shade400),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Aucune vente trouvée',
                                         style: TextStyle(
                                           fontSize: 16,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blue.shade800,
+                                          color: Colors.grey.shade600,
                                         ),
                                       ),
-                                    ),
-                                  ),
-                                  title: Text(
-                                    entry.key,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
-                                  trailing: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.shade50,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      '${entry.value} unités',
-                                      style: TextStyle(
-                                        fontSize: 14,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.blue.shade800,
+                                      Text(
+                                        'Sélectionnez une autre période',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey.shade500,
+                                        ),
                                       ),
-                                    ),
+                                    ],
                                   ),
+                                )
+                              : ListView.separated(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: _paginatedVentes.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final vente = _paginatedVentes[index];
+                                    final formattedDate = DateFormat('dd/MM/yyyy HH:mm')
+                                        .format(vente.date);
+                                    return Card(
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: Colors.grey.shade200,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: ExpansionTile(
+                                        leading: Icon(Icons.receipt_rounded,
+                                            color: Colors.blue.shade800),
+                                        title: Text(
+                                          'Vente #${vente.idVente}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        subtitle: Text(
+                                          formattedDate,
+                                          style: const TextStyle(fontSize: 12),
+                                        ),
+                                        trailing: Text(
+                                          '${vente.montantTotal.toStringAsFixed(2)} FCFA',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.green.shade600,
+                                          ),
+                                        ),
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                                horizontal: 16, vertical: 8),
+                                            child: Column(
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: vente.produitsVendus
+                                                  .map((produit) => Padding(
+                                                        padding:
+                                                            const EdgeInsets.only(bottom: 8),
+                                                        child: Row(
+                                                          children: [
+                                                            Expanded(
+                                                              child: Text(
+                                                                '- ${produit.nom}',
+                                                                style: const TextStyle(
+                                                                    fontSize: 14),
+                                                              ),
+                                                            ),
+                                                            Text(
+                                                              'x${produit.quantiteVendue}',
+                                                              style: TextStyle(
+                                                                fontSize: 14,
+                                                                color: Colors
+                                                                    .grey.shade600,
+                                                              ),
+                                                            ),
+                                                            const SizedBox(width: 16),
+                                                            Text(
+                                                              '${(produit.prix * produit.quantiteVendue).toStringAsFixed(2)} FCFA',
+                                                              style: const TextStyle(
+                                                                fontSize: 14,
+                                                                fontWeight:
+                                                                    FontWeight.w500,
+                                                              ),
+                                                            ),
+                                                          ],
+                                                        ),
+                                                      ))
+                                                  .toList(),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  },
                                 ),
-                              );
-                            },
-                          ),
+                    ),
+                    _buildPaginationControls(true),
+                  ],
+                ),
+
+                // Onglet Top Produits
+                Column(
+                  children: [
+                    Expanded(
+                      child: isLoading
+                          ? Center(
+                              child: CircularProgressIndicator(
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                    Colors.blue.shade800),
+                              ),
+                            )
+                          : _topProduits.isEmpty
+                              ? Center(
+                                  child: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Icon(Icons.shopping_bag_rounded,
+                                          size: 48, color: Colors.grey.shade400),
+                                      const SizedBox(height: 16),
+                                      Text(
+                                        'Aucun produit vendu',
+                                        style: TextStyle(
+                                          fontSize: 16,
+                                          color: Colors.grey.shade600,
+                                        ),
+                                      ),
+                                      Text(
+                                        'Sélectionnez une autre période',
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          color: Colors.grey.shade500,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                )
+                              : ListView.separated(
+                                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                                  itemCount: _paginatedTopProduits.length,
+                                  separatorBuilder: (context, index) =>
+                                      const SizedBox(height: 8),
+                                  itemBuilder: (context, index) {
+                                    final entry = _paginatedTopProduits.entries.elementAt(index);
+                                    return Card(
+                                      elevation: 0,
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(12),
+                                        side: BorderSide(
+                                          color: Colors.grey.shade200,
+                                          width: 1,
+                                        ),
+                                      ),
+                                      child: ListTile(
+                                        leading: Container(
+                                          width: 40,
+                                          height: 40,
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            shape: BoxShape.circle,
+                                          ),
+                                          child: Center(
+                                            child: Text(
+                                              '${(_currentPageProduits - 1) * _itemsPerPage + index + 1}',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.blue.shade800,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                        title: Text(
+                                          entry.key,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                        trailing: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                              horizontal: 12, vertical: 6),
+                                          decoration: BoxDecoration(
+                                            color: Colors.blue.shade50,
+                                            borderRadius: BorderRadius.circular(16),
+                                          ),
+                                          child: Text(
+                                            '${entry.value} unités',
+                                            style: TextStyle(
+                                              fontSize: 14,
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.blue.shade800,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                ),
+                    ),
+                    _buildPaginationControls(false),
+                  ],
+                ),
               ],
             ),
           ),

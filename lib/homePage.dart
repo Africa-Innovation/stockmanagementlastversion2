@@ -445,6 +445,8 @@ class _HomePageState extends State<HomePage> {
                   title: 'Imprimante',
                   color: Colors.blueGrey.shade600,
                   onTap: () async {
+                    // Demander les permissions Bluetooth et de localisation
+                    await PermissionHandler.requestBluetoothPermissions();
                     await _selectPrinter(context);
                   },
                 ),
