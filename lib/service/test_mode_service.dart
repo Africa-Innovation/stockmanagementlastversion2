@@ -108,11 +108,13 @@ static Future<Map<String, dynamic>> getCurrentState() async {
                 Navigator.pop(context); // Fermer la boîte de code
                 Navigator.pop(context); // Fermer la boîte d'alerte
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Mode réel activé!')),
+                  SnackBar(content: Text('Mode réel activé!'),
+                  backgroundColor: Colors.green.shade600,),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Code incorrect')),
+                  SnackBar(content: Text('Code incorrect'),
+                  backgroundColor: Colors.red.shade400,),
                 );
               }
             },

@@ -96,11 +96,13 @@ class SynchronisationService {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Restauration des données terminée avec succès.')),
+        SnackBar(content: Text('Restauration des données terminée avec succès.'),
+        backgroundColor: Colors.green.shade600,),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Erreur lors de la restauration des données : $e')),
+        SnackBar(content: Text('Erreur lors de la restauration des données : $e'),
+        backgroundColor: Colors.red.shade400),
       );
     }
   }
