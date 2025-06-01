@@ -82,7 +82,7 @@ class _AlertesStockPageState extends State<AlertesStockPage> {
                   // Afficher un message de succès
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: Text('Stock ravitaillé avec succès'),
+                      content: const Text('Stock ravitaillé avec succès'),
                       backgroundColor: Colors.green.shade600,
                     ),
                   );

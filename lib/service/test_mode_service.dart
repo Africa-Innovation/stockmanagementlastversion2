@@ -63,8 +63,8 @@ static Future<Map<String, dynamic>> getCurrentState() async {
       context: context,
       barrierDismissible: false,
       builder: (context) => AlertDialog(
-        title: Text('Mode test terminé'),
-        content: Column(
+        title: const Text('Mode test terminé'),
+        content: const Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Vous avez atteint la limite du mode test.'),
@@ -75,11 +75,11 @@ static Future<Map<String, dynamic>> getCurrentState() async {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('OK'),
+            child: const Text('OK'),
           ),
           TextButton(
             onPressed: () => _showCodeInputDialog(context),
-            child: Text('Entrer le code'),
+            child: const Text('Entrer le code'),
           ),
         ],
       ),
@@ -92,11 +92,11 @@ static Future<Map<String, dynamic>> getCurrentState() async {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text('Code secret'),
+        title: const Text('Code secret'),
         content: TextField(
           controller: codeController,
           obscureText: true,
-          decoration: InputDecoration(
+          decoration: const InputDecoration(
             labelText: 'Entrez le code secret',
           ),
         ),
@@ -108,17 +108,17 @@ static Future<Map<String, dynamic>> getCurrentState() async {
                 Navigator.pop(context); // Fermer la boîte de code
                 Navigator.pop(context); // Fermer la boîte d'alerte
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Mode réel activé!'),
+                  SnackBar(content: const Text('Mode réel activé!'),
                   backgroundColor: Colors.green.shade600,),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Code incorrect'),
+                  SnackBar(content: const Text('Code incorrect'),
                   backgroundColor: Colors.red.shade400,),
                 );
               }
             },
-            child: Text('Valider'),
+            child: const Text('Valider'),
           ),
         ],
       ),

@@ -87,7 +87,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                       label: RichText(
                         text: TextSpan(
                           text: 'Nom',
-                          style: TextStyle(color: Colors.black),
+                          style: const TextStyle(color: Colors.black),
                           children: [
                             TextSpan(
                               text: '*',
@@ -103,7 +103,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                   // Référence
                   TextField(
                     controller: _referenceController,
-                    decoration: InputDecoration(labelText: 'Référence'),
+                    decoration: const InputDecoration(labelText: 'Référence'),
                   ),
                   // Prix
                   TextField(
@@ -112,7 +112,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                       label: RichText(
                         text: TextSpan(
                           text: 'Prix',
-                          style: TextStyle(color: Colors.black),
+                          style: const TextStyle(color: Colors.black),
                           children: [
                             TextSpan(
                               text: '*',
@@ -133,7 +133,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                       label: RichText(
                         text: TextSpan(
                           text: 'Stock initial',
-                          style: TextStyle(color: Colors.black),
+                          style: const TextStyle(color: Colors.black),
                           children: [
                             TextSpan(
                               text: '*',
@@ -154,7 +154,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                       label: RichText(
                         text: TextSpan(
                           text: 'Stock minimum',
-                          style: TextStyle(color: Colors.black),
+                          style: const TextStyle(color: Colors.black),
                           children: [
                             TextSpan(
                               text: '*',
@@ -171,9 +171,9 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                   // Catégorie
                   TextField(
                     controller: _categorieController,
-                    decoration: InputDecoration(labelText: 'Catégorie'),
+                    decoration: const InputDecoration(labelText: 'Catégorie'),
                   ),
-                  SizedBox(height: 16),
+                  const SizedBox(height: 16),
                   const Text('* Champs obligatoires', style: TextStyle(color: Colors.red)),
                 ],
               ),
@@ -181,7 +181,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(context).pop(),
-                child: Text('Annuler'),
+                child: const Text('Annuler'),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -209,7 +209,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                     }
 
                     final produit = Produit(
-                      idProduit: produitExist?.idProduit ?? Uuid().v4(),
+                      idProduit: produitExist?.idProduit ?? const Uuid().v4(),
                       nom: _nomController.text,
                       reference: _referenceController.text,
                       prix: double.parse(_prixController.text),
@@ -251,7 +251,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Détails du produit'),
+          title: const Text('Détails du produit'),
           content: SingleChildScrollView(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +272,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
               onPressed: () {
                 Navigator.of(context).pop(); // Fermer le dialog
               },
-              child: Text('Fermer'),
+              child: const Text('Fermer'),
             ),
           ],
         );
@@ -286,14 +286,14 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text('Confirmer la suppression'),
-          content: Text('Êtes-vous sûr de vouloir supprimer ce produit ?'),
+          title: const Text('Confirmer la suppression'),
+          content: const Text('Êtes-vous sûr de vouloir supprimer ce produit ?'),
           actions: [
             TextButton(
               onPressed: () {
                 Navigator.of(context).pop(); // Fermer le dialog sans supprimer
               },
-              child: Text('Annuler'),
+              child: const Text('Annuler'),
             ),
             ElevatedButton(
               onPressed: () async {
@@ -352,7 +352,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
     return Scaffold(
       appBar: AppBar(
         title:
-            Text('Gestion des Produits', 
+            const Text('Gestion des Produits', 
             style: TextStyle(
               color: Colors.white,
               fontWeight: FontWeight.w600,
@@ -360,7 +360,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
         backgroundColor: Colors.blueAccent,
         elevation: 8,
         centerTitle: true,
-        iconTheme: IconThemeData(
+        iconTheme: const IconThemeData(
             color: Colors.white), // Changer la couleur de l'icône de retour
         actions: [
           IconButton(
@@ -382,7 +382,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
               controller: _searchController,
               decoration: InputDecoration(
                 labelText: 'Rechercher un produit',
-                prefixIcon: Icon(Icons.search),
+                prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -392,7 +392,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
           Expanded(
             child:
                 _isLoading // Vérifier si les données sont en cours de chargement
-                    ? Center(
+                    ? const Center(
                         child:
                             CircularProgressIndicator(), // Afficher un indicateur de chargement
                       )
@@ -400,7 +400,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                         ? Center(
                             child: Text(
                               _errorMessage!,
-                              style: TextStyle(color: Colors.red, fontSize: 16),
+                              style: const TextStyle(color: Colors.red, fontSize: 16),
                             ),
                           )
                         : _produitsFiltres
@@ -446,7 +446,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
                                           IconButton(
-                                            icon: Icon(Icons.visibility,
+                                            icon: const Icon(Icons.visibility,
                                                 color: Colors.blue),
                                             onPressed: () {
                                               _afficherDetailsProduit(
@@ -454,7 +454,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                                             },
                                           ),
                                           IconButton(
-                                            icon: Icon(Icons.edit,
+                                            icon: const Icon(Icons.edit,
                                                 color: Colors.orange),
                                             onPressed: () {
                                               _afficherFormulaireAjoutProduit(
@@ -463,7 +463,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
                                             },
                                           ),
                                           IconButton(
-                                            icon: Icon(Icons.delete,
+                                            icon: const Icon(Icons.delete,
                                                 color: Colors.red),
                                             onPressed: () async {
                                               await _afficherConfirmationSuppression(
@@ -485,7 +485,7 @@ class _GestionProduitsPageState extends State<GestionProduitsPage> {
               context); // Afficher le formulaire d'ajout
         },
         backgroundColor: Colors.blue.shade800,
-        child: Icon(
+        child: const Icon(
           Icons.add,
           color: Colors.white,
         ),
